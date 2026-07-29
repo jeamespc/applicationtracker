@@ -298,6 +298,7 @@
         <option value="followup">Sort: Follow-up date</option>
         <option value="teamSize">Sort: Team size</option>
         <option value="match">Sort: Best match (my profile)</option>
+        <option value="opening">Sort: Open listing first</option>
       </select>
       <div class="spacer"></div>
       <button class="btn" id="selectModeBtn">Select</button>
@@ -609,6 +610,11 @@ function sortItems(items){
   if(by==="name") arr.sort((a,b)=>a.studio.localeCompare(b.studio));
   else if(by==="followup") arr.sort((a,b)=>(a.followUpDate||"9999").localeCompare(b.followUpDate||"9999"));
   else if(by==="match") arr.sort((a,b)=> matchScore(b)-matchScore(a) || a.studio.localeCompare(b.studio));
+  else if(by==="opening") arr.sort((a,b)=>{
+    const oa = a.openingsStatus==="Open listing found" ? 0 : 1;
+    const ob = b.openingsStatus==="Open listing found" ? 0 : 1;
+    return oa-ob || a.studio.localeCompare(b.studio);
+  });
   else if(by==="teamSize") arr.sort((a,b)=>{
     const ta = parseTeamSize(a.teamSize), tb = parseTeamSize(b.teamSize);
     if(ta===null && tb===null) return a.studio.localeCompare(b.studio);
