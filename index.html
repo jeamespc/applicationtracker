@@ -179,12 +179,6 @@
   .openings-row a:hover{text-decoration:underline;}
   .openings-note{color:var(--text-dim); font-size:0.78rem; width:100%;}
 
-  .why-preview{
-    font-size:0.8rem; color:var(--text-dim); padding:0 14px 12px; margin-top:-6px;
-    max-width:720px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .card.open .why-preview{display:none;}
-
   .empty{text-align:center; color:var(--text-faint); padding:40px 0; font-size:0.9rem; border:1px solid var(--border);}
 
   details.help{background:var(--surface); border:1px solid var(--border); margin-top:24px;}
@@ -820,7 +814,6 @@ function renderList(){
           <span class="chev">&#9656;</span>
         </div>
       </div>
-      ${!open ? `<div class="why-preview">${escapeHtml(item.whyFits)}</div>` : ""}
       <div class="card-body">
         <div class="grid2">
           ${readOnlyRow(item,"channel","Channel")}
