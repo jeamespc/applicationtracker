@@ -97,10 +97,11 @@
   .card.selected{ outline:2px solid var(--accent); outline-offset:-2px; }
   .select-checkbox{ margin-left:14px; flex:0 0 auto; width:16px; height:16px; cursor:pointer; accent-color:var(--accent); }
   .card-head{
-    display:flex; align-items:stretch; cursor:pointer;
+    display:flex; align-items:center; gap:14px; cursor:pointer; padding:12px 14px;
   }
   .status-node{
-    width:44px; flex:0 0 44px; background:var(--status-color, var(--text-faint));
+    width:40px; height:40px; flex:0 0 40px;
+    background:var(--status-color, var(--text-faint));
     transition:filter .2s ease, transform .2s ease;
   }
   .status-node.lit{
@@ -116,19 +117,20 @@
     0%,100%{ filter:drop-shadow(0 0 6px var(--stProgress)) brightness(1.25); }
     50%{ filter:drop-shadow(0 0 11px var(--stProgress)) brightness(1.45); }
   }
-  @media(max-width:560px){ .status-node{width:32px; flex-basis:32px;} }
+  @media(max-width:560px){ .status-node{width:30px; height:30px; flex-basis:30px;} }
   .card-head-main{
-    flex:1 1 auto; min-width:0; display:flex; align-items:center; flex-wrap:wrap; gap:10px;
-    padding:12px 14px;
+    flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:4px;
   }
-  .card-head-right{display:flex; align-items:center; gap:8px; padding:12px 14px 12px 0; flex:0 0 auto;}
+  .card-head-right{display:flex; align-items:center; gap:8px; flex:0 0 auto;}
+  .name-row{display:flex; align-items:center; flex-wrap:wrap; gap:8px;}
   .card-head .name{
     font-family:'Arial Black','Arial',sans-serif; font-weight:900;
     font-size:0.88rem; letter-spacing:-0.01em; text-transform:uppercase;
-    flex:1 1 auto; min-width:120px;
   }
-  .card-head .meta{color:var(--text-dim); font-size:0.75rem; display:none; white-space:nowrap; text-transform:uppercase; letter-spacing:0.04em;}
-  @media(min-width:640px){ .card-head .meta{display:block;} }
+  .row-desc{
+    color:var(--text-dim); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
   .due-dot{width:9px; height:9px; background:var(--stRejected); flex:0 0 auto;}
   .open-badge{
     display:inline-flex; align-items:center; gap:5px; padding:3px 8px;
@@ -667,6 +669,13 @@ function specList(item){
   return String(item.specialization||"").split(",").map(s=>s.trim()).filter(Boolean);
 }
 
+function locSpecLine(item){
+  const loc = String(item.location||"").trim().toUpperCase();
+  const specs = specList(item).map(s=>s.toUpperCase()).join(" + ");
+  if(loc && specs) return `${loc} / ${specs}`;
+  return loc || specs || "";
+}
+
 function parseTeamSize(str){
   const s = String(str||"").toLowerCase();
   const m = s.match(/\d+/);
@@ -794,13 +803,15 @@ function renderList(){
         ${selectMode ? `<input type="checkbox" class="select-checkbox" data-select="${item.id}" ${selected?"checked":""} onclick="event.stopPropagation()">` : ""}
         <span class="status-node${lit?" lit":""}" style="background:var(${statusVars[0]})" title="${escapeHtml(item.status)}${litReason}"></span>
         <div class="card-head-main">
-          <span class="name">${escapeHtml(item.studio)}</span>
-          ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
-          ${researchingIds.has(item.id) ? `<span class="open-badge researching-badge">Researching&#8230;</span>` : ""}
-          ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
-          ${matchScore(item) > 0 ? `<span class="open-badge match-badge" title="Shares ${matchScore(item)} specialization(s) with your profile">&#9679; Match</span>` : ""}
-          ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
-          <span class="meta">${escapeHtml(item.channel)}${item.location?" · "+escapeHtml(item.location):""}</span>
+          <div class="name-row">
+            <span class="name">${escapeHtml(item.studio)}</span>
+            ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
+            ${researchingIds.has(item.id) ? `<span class="open-badge researching-badge">Researching&#8230;</span>` : ""}
+            ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
+            ${matchScore(item) > 0 ? `<span class="open-badge match-badge" title="Shares ${matchScore(item)} specialization(s) with your profile">&#9679; Match</span>` : ""}
+            ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
+          </div>
+          <span class="row-desc">${escapeHtml(locSpecLine(item))}</span>
         </div>
         <div class="card-head-right">
           <select class="status-select" data-id="${item.id}" data-key="status" style="color:var(${statusVars[0]});background-color:var(${statusVars[1]})">
