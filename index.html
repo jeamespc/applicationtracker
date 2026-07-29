@@ -6,120 +6,128 @@
 <title>Application Tracker</title>
 <style>
   :root{
-    --bg:#f5f4f1; --surface:#ffffff; --surface-2:#fafaf8; --border:#e2e0da;
-    --text:#1c1b19; --text-dim:#6b6862; --text-faint:#9b9790;
-    --accent:#1c1b19; --accent-contrast:#ffffff;
-    --stInterested:#7a5fb0; --stInterested-bg:#ece4f7;
-    --stReady:#e7c200; --stReady-bg:#fdf6d8;
-    --stApplied:#0d7d72; --stApplied-bg:#d7f1ec;
-    --stProgress:#3f8a52; --stProgress-bg:#dcefe0;
-    --stRejected:#c23b3b; --stRejected-bg:#fadada;
-    --link:#2f6fa8;
-    --shadow: 0 1px 2px rgba(20,18,14,0.06), 0 1px 6px rgba(20,18,14,0.05);
-    --radius: 12px;
+    --bg:#FAFAF7; --surface:#FFFFFF; --surface-2:#FAFAF7; --border:#0A0A0A;
+    --text:#0A0A0A; --text-dim:#666666; --text-faint:#999999;
+    --accent:#0A0A0A; --accent-contrast:#FAFAF7;
+    --stInterested:#1C1C1C; --stInterested-bg:#e8e8e6;
+    --stReady:#F59D23; --stReady-bg:#fdecd2;
+    --stApplied:#283583; --stApplied-bg:#dfe1f2;
+    --stProgress:#14672F; --stProgress-bg:#dcefe0;
+    --stRejected:#AD3745; --stRejected-bg:#f6dbdf;
+    --link:#283583;
+    --radius: 0;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#171614; --surface:#211f1c; --surface-2:#26241f; --border:#3a3733;
-      --text:#f0eee9; --text-dim:#b7b3ab; --text-faint:#847f76;
-      --accent:#f0eee9; --accent-contrast:#171614;
-      --stInterested:#b399e0; --stInterested-bg:#2e2540;
-      --stReady:#e7c200; --stReady-bg:#3a341a;
-      --stApplied:#4fd1c0; --stApplied-bg:#163330;
-      --stProgress:#5cb373; --stProgress-bg:#20342a;
-      --stRejected:#e06060; --stRejected-bg:#3d2222;
-      --link:#6ba9dd;
-      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 2px 10px rgba(0,0,0,0.25);
+      --bg:#0A0A0A; --surface:#1C1C1C; --surface-2:#141414; --border:#3a3a38;
+      --text:#FAFAF7; --text-dim:#b0aca5; --text-faint:#85817a;
+      --accent:#FAFAF7; --accent-contrast:#0A0A0A;
+      --stInterested:#b0aca5; --stInterested-bg:#2b2b29;
+      --stReady:#F59D23; --stReady-bg:#3d2f16;
+      --stApplied:#7c8fd6; --stApplied-bg:#1f2340;
+      --stProgress:#4dbf78; --stProgress-bg:#1a3322;
+      --stRejected:#e0707a; --stRejected-bg:#3a1f23;
+      --link:#93a4e6;
     }
   }
   :root[data-theme="dark"]{
-    --bg:#171614; --surface:#211f1c; --surface-2:#26241f; --border:#3a3733;
-    --text:#f0eee9; --text-dim:#b7b3ab; --text-faint:#847f76;
-    --accent:#f0eee9; --accent-contrast:#171614;
-    --stInterested:#b399e0; --stInterested-bg:#2e2540;
-    --stReady:#e7c200; --stReady-bg:#3a341a;
-    --stApplied:#4fd1c0; --stApplied-bg:#163330;
-    --stProgress:#5cb373; --stProgress-bg:#20342a;
-    --stRejected:#e06060; --stRejected-bg:#3d2222;
-    --link:#6ba9dd;
+    --bg:#0A0A0A; --surface:#1C1C1C; --surface-2:#141414; --border:#3a3a38;
+    --text:#FAFAF7; --text-dim:#b0aca5; --text-faint:#85817a;
+    --accent:#FAFAF7; --accent-contrast:#0A0A0A;
+    --stInterested:#b0aca5; --stInterested-bg:#2b2b29;
+    --stReady:#F59D23; --stReady-bg:#3d2f16;
+    --stApplied:#7c8fd6; --stApplied-bg:#1f2340;
+    --stProgress:#4dbf78; --stProgress-bg:#1a3322;
+    --stRejected:#e0707a; --stRejected-bg:#3a1f23;
+    --link:#93a4e6;
   }
   :root[data-theme="light"]{
-    --bg:#f5f4f1; --surface:#ffffff; --surface-2:#fafaf8; --border:#e2e0da;
-    --text:#1c1b19; --text-dim:#6b6862; --text-faint:#9b9790;
-    --accent:#1c1b19; --accent-contrast:#ffffff;
+    --bg:#FAFAF7; --surface:#FFFFFF; --surface-2:#FAFAF7; --border:#0A0A0A;
+    --text:#0A0A0A; --text-dim:#666666; --text-faint:#999999;
+    --accent:#0A0A0A; --accent-contrast:#FAFAF7;
   }
   *{box-sizing:border-box;}
   body{
     margin:0; background:var(--bg); color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:'Arial', sans-serif;
     -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:1080px; margin:0 auto; padding:32px 20px 80px;}
   header.top{margin-bottom:24px;}
-  h1{font-size:1.5rem; margin:0 0 4px; letter-spacing:-0.01em;}
+  h1{
+    font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+    font-size:1.6rem; margin:0 0 6px; letter-spacing:-0.01em; text-transform:uppercase;
+  }
   .sub{color:var(--text-dim); font-size:0.9rem; margin:0;}
 
-  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin:20px 0 24px;}
-  .stat{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; box-shadow:var(--shadow); cursor:pointer; user-select:none; transition:border-color .12s ease, transform .12s ease;}
-  .stat:hover{border-color:var(--text-faint);}
-  .stat:active{transform:scale(0.98);}
-  .stat.active{border-color:var(--accent); box-shadow:var(--shadow), 0 0 0 2px var(--accent) inset;}
-  .stat .n{font-size:1.4rem; font-weight:700; line-height:1;}
-  .stat .l{font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-dim); margin-top:4px;}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:2px; margin:20px 0 24px; background:var(--border);}
+  .stat{background:var(--surface); padding:12px 14px; cursor:pointer; user-select:none; transition:background-color .12s ease, color .12s ease;}
+  .stat:hover{background:var(--surface-2);}
+  .stat.active{background:var(--accent); color:var(--accent-contrast);}
+  .stat .n{font-family:'Arial Black','Arial',sans-serif; font-weight:900; font-size:1.5rem; line-height:1;}
+  .stat .l{font-size:0.66rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-top:4px;}
+  .stat.active .l{color:var(--accent-contrast); opacity:0.75;}
 
   .toolbar{
     display:flex; flex-wrap:wrap; gap:8px; align-items:center;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    padding:10px; margin-bottom:16px; box-shadow:var(--shadow);
+    background:var(--surface); border:1px solid var(--border);
+    padding:10px; margin-bottom:2px;
   }
   .toolbar input[type="search"], .toolbar select{
     background:var(--surface-2); border:1px solid var(--border); color:var(--text);
-    border-radius:8px; padding:7px 10px; font-size:0.85rem; font-family:inherit;
+    padding:7px 10px; font-size:0.82rem; font-family:inherit;
   }
   .toolbar input[type="search"]{flex:1 1 180px; min-width:140px;}
   .toolbar .spacer{flex:1;}
   .btn{
     border:1px solid var(--border); background:var(--surface-2); color:var(--text);
-    border-radius:8px; padding:7px 12px; font-size:0.8rem; cursor:pointer; font-family:inherit;
-    white-space:nowrap;
+    padding:7px 14px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+    cursor:pointer; font-family:inherit; white-space:nowrap; transition:background-color .12s ease, color .12s ease;
   }
-  .btn:hover{border-color:var(--text-faint);}
+  .btn:hover{background:var(--border); color:var(--bg);}
   .btn.primary{background:var(--accent); color:var(--accent-contrast); border-color:var(--accent);}
+  .btn.primary:hover{opacity:0.82;}
   .btn.danger{color:var(--stRejected); border-color:var(--stRejected);}
+  .btn.danger:hover{background:var(--stRejected); color:var(--bg);}
 
-  .list{display:flex; flex-direction:column; gap:8px;}
+  .list{display:flex; flex-direction:column; gap:2px; margin-top:16px;}
   .card{
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    box-shadow:var(--shadow); overflow:hidden; border-left:4px solid var(--status-color, var(--border));
+    background:var(--surface); border:1px solid var(--border);
   }
   .card-head{
     display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer;
   }
-  .card-head .name{font-weight:600; font-size:0.95rem; flex:1 1 auto; min-width:120px;}
-  .card-head .meta{color:var(--text-dim); font-size:0.78rem; display:none; white-space:nowrap;}
-  @media(min-width:640px){ .card-head .meta{display:block;} }
-  .due-dot{width:8px; height:8px; border-radius:50%; background:var(--stRejected); flex:0 0 auto;}
-  .open-badge{
-    display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px;
-    font-size:0.68rem; font-weight:600; white-space:nowrap; flex:0 0 auto;
-    color:var(--stProgress); background:var(--stProgress-bg);
+  .status-node{width:13px; height:13px; background:var(--status-color, var(--text-faint)); flex:0 0 auto;}
+  .card-head .name{
+    font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+    font-size:0.88rem; letter-spacing:-0.01em; text-transform:uppercase;
+    flex:1 1 auto; min-width:120px;
   }
-  .site-link{color:var(--link); text-decoration:none; font-size:0.85rem; flex:0 0 auto; line-height:1;}
+  .card-head .meta{color:var(--text-dim); font-size:0.75rem; display:none; white-space:nowrap; text-transform:uppercase; letter-spacing:0.04em;}
+  @media(min-width:640px){ .card-head .meta{display:block;} }
+  .due-dot{width:9px; height:9px; background:var(--stRejected); flex:0 0 auto;}
+  .open-badge{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 8px;
+    font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; flex:0 0 auto;
+    color:var(--accent-contrast); background:var(--stProgress);
+  }
+  .open-badge.match-badge{background:var(--stApplied);}
+  .site-link{color:var(--link); text-decoration:none; font-size:0.9rem; flex:0 0 auto; line-height:1;}
   .site-link:hover{text-decoration:underline;}
 
   .badge{
-    display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px;
-    font-size:0.7rem; font-weight:600; white-space:nowrap; letter-spacing:0.01em;
+    display:inline-flex; align-items:center; padding:3px 9px;
+    font-size:0.66rem; font-weight:700; white-space:nowrap; letter-spacing:0.03em; text-transform:uppercase;
   }
   .chev{color:var(--text-faint); transition:transform .15s ease; flex:0 0 auto;}
   .card.open .chev{transform:rotate(90deg);}
 
   .status-select{
-    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
-    border-radius:999px; padding:5px 26px 5px 12px; font-size:0.75rem; font-weight:600;
+    background:var(--status-bg, var(--surface-2)); border:1px solid var(--border); color:var(--status-color, var(--text));
+    padding:5px 24px 5px 10px; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
     font-family:inherit; cursor:pointer; flex:0 0 auto; -webkit-appearance:none; appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%239b9790' d='M2.5 4.5l3.5 3.5 3.5-3.5z'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right 8px center; background-size:10px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%230A0A0A' d='M2.5 4.5l3.5 3.5 3.5-3.5z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 8px center; background-size:9px;
   }
 
   .card-body{display:none; padding:0 14px 16px; border-top:1px solid var(--border);}
@@ -128,10 +136,10 @@
   @media(max-width:560px){ .grid2{grid-template-columns:1fr;} }
   .field{display:flex; flex-direction:column; gap:4px;}
   .field.full{grid-column:1/-1;}
-  .field label{font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-dim);}
+  .field label{font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); font-weight:700;}
   .field input, .field select, .field textarea{
     background:var(--surface-2); border:1px solid var(--border); color:var(--text);
-    border-radius:8px; padding:7px 9px; font-size:0.85rem; font-family:inherit; width:100%;
+    padding:7px 9px; font-size:0.85rem; font-family:inherit; width:100%;
   }
   .field textarea{resize:vertical; min-height:44px; line-height:1.4;}
   .field a.mailto{font-size:0.8rem; color:var(--link); text-decoration:none; margin-top:2px;}
@@ -148,31 +156,31 @@
   }
   .card.open .why-preview{display:none;}
 
-  .empty{text-align:center; color:var(--text-faint); padding:40px 0; font-size:0.9rem;}
+  .empty{text-align:center; color:var(--text-faint); padding:40px 0; font-size:0.9rem; border:1px solid var(--border);}
 
-  details.help{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-top:24px; box-shadow:var(--shadow);}
-  details.help summary{padding:12px 16px; cursor:pointer; font-weight:600; font-size:0.9rem;}
+  details.help{background:var(--surface); border:1px solid var(--border); margin-top:24px;}
+  details.help summary{padding:12px 16px; cursor:pointer; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.04em;}
   details.help .help-body{padding:0 16px 16px; font-size:0.85rem; color:var(--text-dim); line-height:1.55;}
-  details.help .help-body h4{color:var(--text); margin:14px 0 4px; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em;}
+  details.help .help-body h4{color:var(--text); margin:14px 0 4px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;}
   details.help .help-body ul{margin:4px 0; padding-left:18px;}
   .legend-row{display:flex; align-items:center; gap:8px; margin:3px 0;}
-  .swatch{width:12px; height:12px; border-radius:3px; flex:0 0 auto;}
+  .swatch{width:12px; height:12px; flex:0 0 auto;}
 
   .toast{
     position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px);
-    background:var(--accent); color:var(--accent-contrast); padding:8px 16px; border-radius:999px;
-    font-size:0.8rem; opacity:0; transition:opacity .2s ease, transform .2s ease; pointer-events:none;
-    box-shadow:var(--shadow);
+    background:var(--accent); color:var(--accent-contrast); padding:9px 18px;
+    font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+    opacity:0; transition:opacity .2s ease, transform .2s ease; pointer-events:none;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
   #importFile{display:none;}
 
   .auth-wrap{display:flex; justify-content:center; padding:60px 20px;}
   .auth-card{
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    box-shadow:var(--shadow); padding:24px; width:100%; max-width:340px;
+    background:var(--surface); border:1px solid var(--border);
+    padding:24px; width:100%; max-width:340px;
   }
-  .auth-card h2{margin:0 0 4px; font-size:1.1rem;}
+  .auth-card h2{font-family:'Arial Black','Arial',sans-serif; font-weight:900; margin:0 0 4px; font-size:1.05rem; text-transform:uppercase;}
   .auth-card .field{margin-top:12px;}
   .auth-msg{font-size:0.8rem; color:var(--text-dim); min-height:1.2em; margin-top:10px;}
   .auth-msg.error{color:var(--stRejected);}
@@ -180,7 +188,7 @@
   #authBar .who{font-size:0.8rem; color:var(--text-dim);}
   .starter-prompt{
     text-align:center; padding:40px 20px; color:var(--text-dim); font-size:0.9rem;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+    background:var(--surface); border:1px solid var(--border);
   }
   .starter-prompt .btn{margin-top:12px;}
   #addCompanyForm{display:none;}
@@ -193,6 +201,7 @@
     <p class="sub">Track every application from first contact to offer, in one place.</p>
     <div id="authBar">
       <span class="who" id="authWho"></span>
+      <button class="btn" id="myProfileBtn">My Profile</button>
       <button class="btn" id="signOutBtn">Sign out</button>
     </div>
   </header>
@@ -200,15 +209,61 @@
   <div id="authScreen" style="display:none;">
     <div class="auth-wrap">
       <div class="auth-card">
-        <h2>Sign in</h2>
-        <p class="sub">Your own private list, synced to your account.</p>
+        <h2 id="authTitle">Sign in</h2>
+        <p class="sub" id="authSub">Your own private list, synced to your account.</p>
         <div class="field"><label>Email</label><input type="email" id="authEmail" autocomplete="email"></div>
         <div class="field"><label>Password</label><input type="password" id="authPassword" autocomplete="current-password"></div>
+
+        <div id="signupFields" style="display:none;">
+          <div class="grid2">
+            <div class="field"><label>First Name</label><input type="text" id="authFirstName"></div>
+            <div class="field"><label>Last Name</label><input type="text" id="authLastName"></div>
+          </div>
+          <div class="field"><label>Location</label><input type="text" id="authLocation" placeholder="e.g. Milan, Italy"></div>
+          <div class="field">
+            <label>Specialization</label>
+            <div id="authSpecCheckboxes"></div>
+          </div>
+          <div class="field"><label>Portfolio (optional, PDF)</label><input type="file" id="authPortfolio" accept="application/pdf,image/*"></div>
+          <div class="field"><label>CV (optional, PDF)</label><input type="file" id="authCv" accept="application/pdf"></div>
+        </div>
+
         <div style="display:flex; gap:8px; margin-top:14px;">
-          <button class="btn primary" id="signInBtn">Log in</button>
-          <button class="btn" id="signUpBtn">Sign up</button>
+          <button class="btn primary" id="authSubmitBtn">Log in</button>
         </div>
         <p class="auth-msg" id="authMsg"></p>
+        <p style="margin-top:12px;"><a href="#" id="authToggleMode" class="site-link">Need an account? Sign up</a></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileScreen" style="display:none;">
+    <div class="auth-wrap">
+      <div class="auth-card" style="max-width:440px;">
+        <h2>My Profile</h2>
+        <p class="sub">Used to match you against studios in your list.</p>
+        <div class="grid2">
+          <div class="field"><label>First Name</label><input type="text" id="profFirstName"></div>
+          <div class="field"><label>Last Name</label><input type="text" id="profLastName"></div>
+        </div>
+        <div class="field"><label>Location</label><input type="text" id="profLocation"></div>
+        <div class="field">
+          <label>Specialization</label>
+          <div id="profSpecCheckboxes"></div>
+        </div>
+        <div class="field"><label>Portfolio (PDF)</label>
+          <div class="openings-row" id="profPortfolioCurrent"></div>
+          <input type="file" id="profPortfolio" accept="application/pdf,image/*">
+        </div>
+        <div class="field"><label>CV (PDF)</label>
+          <div class="openings-row" id="profCvCurrent"></div>
+          <input type="file" id="profCv" accept="application/pdf">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn primary" id="profSaveBtn">Save profile</button>
+          <button class="btn" id="profCloseBtn">Close</button>
+        </div>
+        <p class="auth-msg" id="profMsg"></p>
       </div>
     </div>
   </div>
@@ -226,6 +281,7 @@
         <option value="name">Sort: Studio A–Z</option>
         <option value="followup">Sort: Follow-up date</option>
         <option value="teamSize">Sort: Team size</option>
+        <option value="match">Sort: Best match (my profile)</option>
       </select>
       <div class="spacer"></div>
       <button class="btn primary" id="addCompanyBtn">+ Add company</button>
@@ -491,11 +547,20 @@ function parseTeamSize(str){
   return null;
 }
 
+function matchScore(item){
+  if(!currentProfile || !currentProfile.specialization) return 0;
+  const mine = specList({specialization: currentProfile.specialization});
+  if(!mine.length) return 0;
+  const theirs = specList(item);
+  return mine.filter(s=>theirs.includes(s)).length;
+}
+
 function sortItems(items){
   const by = document.getElementById("sortBy").value;
   const arr = [...items];
   if(by==="name") arr.sort((a,b)=>a.studio.localeCompare(b.studio));
   else if(by==="followup") arr.sort((a,b)=>(a.followUpDate||"9999").localeCompare(b.followUpDate||"9999"));
+  else if(by==="match") arr.sort((a,b)=> matchScore(b)-matchScore(a) || a.studio.localeCompare(b.studio));
   else if(by==="teamSize") arr.sort((a,b)=>{
     const ta = parseTeamSize(a.teamSize), tb = parseTeamSize(b.teamSize);
     if(ta===null && tb===null) return a.studio.localeCompare(b.studio);
@@ -580,9 +645,11 @@ function renderList(){
     <div class="card ${open?'open':''}" style="--status-color:var(${statusVars[0]})" data-card="${item.id}">
       <div class="card-head" data-toggle="${item.id}">
         <span class="chev">&#9656;</span>
+        <span class="status-node" style="background:var(${statusVars[0]})" title="${escapeHtml(item.status)}"></span>
         <span class="name">${escapeHtml(item.studio)}</span>
         ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
         ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
+        ${matchScore(item) > 0 ? `<span class="open-badge match-badge" title="Shares ${matchScore(item)} specialization(s) with your profile">&#9679; Match</span>` : ""}
         ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
         <span class="meta">${escapeHtml(item.channel)}${item.location?" · "+escapeHtml(item.location):""}</span>
         <select class="status-select" data-id="${item.id}" data-key="status" style="color:var(${statusVars[0]});background-color:var(${statusVars[1]})">
@@ -736,45 +803,184 @@ function downloadBlob(blob, filename){
   URL.revokeObjectURL(url);
 }
 
+let authMode = "signin";
+let currentProfile = null;
+
+function specCheckboxesHtml(containerIdPrefix, checkedList){
+  return SPECIALIZATION_OPTIONS.map(opt=>{
+    const checked = checkedList.includes(opt) ? "checked" : "";
+    return `<label style="display:inline-flex; align-items:center; gap:5px; margin:3px 10px 3px 0; font-size:0.8rem; text-transform:none; font-weight:400;">
+      <input type="checkbox" value="${opt}" data-spec-group="${containerIdPrefix}" ${checked}> ${opt}
+    </label>`;
+  }).join("");
+}
+function getCheckedSpecs(containerId){
+  return [...document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)].map(el=>el.value);
+}
+
 function showAuthScreen(){
   document.getElementById("authScreen").style.display = "block";
   document.getElementById("appScreen").style.display = "none";
+  document.getElementById("profileScreen").style.display = "none";
   document.getElementById("authBar").style.display = "none";
+  document.getElementById("authSpecCheckboxes").innerHTML = specCheckboxesHtml("authSpecCheckboxes", []);
+}
+
+async function uploadUserFile(userId, file, kind){
+  if(!file) return null;
+  const path = `${userId}/${kind}-${Date.now()}-${file.name}`;
+  const { error } = await sb.storage.from("user-files").upload(path, file);
+  if(error){ showToast("Upload failed: " + error.message, true); return null; }
+  return path;
+}
+
+async function ensureProfile(user){
+  const pending = sessionStorage.getItem("pendingProfile");
+  const pendingFields = pending ? JSON.parse(pending) : null;
+  if(pending) sessionStorage.removeItem("pendingProfile");
+
+  const { data: existing } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  if(existing){
+    if(pendingFields){
+      const { data: updated } = await sb.from("profiles").update(pendingFields).eq("id", user.id).select().maybeSingle();
+      currentProfile = updated || existing;
+    } else {
+      currentProfile = existing;
+    }
+    return;
+  }
+  const { data: created } = await sb.from("profiles").insert([{ id: user.id, ...(pendingFields||{}) }]).select().maybeSingle();
+  currentProfile = created;
 }
 
 async function onLoggedIn(user){
   currentUser = user;
   document.getElementById("authScreen").style.display = "none";
+  document.getElementById("profileScreen").style.display = "none";
   document.getElementById("appScreen").style.display = "block";
   document.getElementById("authBar").style.display = "flex";
   document.getElementById("authWho").textContent = user.email;
+  await ensureProfile(user);
   await loadDataFromDb();
   renderAll();
 }
 
+function renderAuthMode(){
+  const isSignup = authMode === "signup";
+  document.getElementById("authTitle").textContent = isSignup ? "Sign up" : "Sign in";
+  document.getElementById("signupFields").style.display = isSignup ? "block" : "none";
+  document.getElementById("authSubmitBtn").textContent = isSignup ? "Create account" : "Log in";
+  document.getElementById("authToggleMode").textContent = isSignup ? "Already have an account? Log in" : "Need an account? Sign up";
+  document.getElementById("authMsg").className = "auth-msg";
+  document.getElementById("authMsg").textContent = "";
+}
+
+async function doSignIn(){
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const msg = document.getElementById("authMsg");
+  msg.className = "auth-msg"; msg.textContent = "Signing in...";
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; }
+}
+
+async function doSignUp(){
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const msg = document.getElementById("authMsg");
+  if(password.length < 6){ msg.className = "auth-msg error"; msg.textContent = "Password must be at least 6 characters."; return; }
+  msg.className = "auth-msg"; msg.textContent = "Creating account...";
+
+  const profileFields = {
+    first_name: document.getElementById("authFirstName").value.trim(),
+    last_name: document.getElementById("authLastName").value.trim(),
+    location: document.getElementById("authLocation").value.trim(),
+    specialization: getCheckedSpecs("authSpecCheckboxes").join(", ")
+  };
+  const portfolioFile = document.getElementById("authPortfolio").files[0];
+  const cvFile = document.getElementById("authCv").files[0];
+
+  const { data: signUpData, error } = await sb.auth.signUp({ email, password });
+  if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; return; }
+
+  if(signUpData.session){
+    // Have an authenticated session immediately (email confirmation off) - files can upload now.
+    const portfolioPath = await uploadUserFile(signUpData.user.id, portfolioFile, "portfolio");
+    const cvPath = await uploadUserFile(signUpData.user.id, cvFile, "cv");
+    if(portfolioPath) profileFields.portfolio_path = portfolioPath;
+    if(cvPath) profileFields.cv_path = cvPath;
+    msg.textContent = "";
+  } else {
+    msg.textContent = "Check your email to confirm your account, then log in — your profile details will be saved once you do. Portfolio/CV uploads will need to be re-added after (re-selecting a file isn't possible until you're signed in).";
+  }
+  // Stashed either way; ensureProfile() (called from onLoggedIn, triggered by the
+  // auth-state-change event this signUp/signIn fires) is the single place that
+  // actually writes the profiles row, so there's no race with a second writer.
+  sessionStorage.setItem("pendingProfile", JSON.stringify(profileFields));
+}
+
 function wireAuth(){
-  document.getElementById("signInBtn").addEventListener("click", async ()=>{
-    const email = document.getElementById("authEmail").value.trim();
-    const password = document.getElementById("authPassword").value;
-    const msg = document.getElementById("authMsg");
-    msg.className = "auth-msg"; msg.textContent = "Signing in...";
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; }
+  renderAuthMode();
+  document.getElementById("authToggleMode").addEventListener("click", (e)=>{
+    e.preventDefault();
+    authMode = authMode === "signup" ? "signin" : "signup";
+    renderAuthMode();
   });
-  document.getElementById("signUpBtn").addEventListener("click", async ()=>{
-    const email = document.getElementById("authEmail").value.trim();
-    const password = document.getElementById("authPassword").value;
-    const msg = document.getElementById("authMsg");
-    if(password.length < 6){ msg.className = "auth-msg error"; msg.textContent = "Password must be at least 6 characters."; return; }
-    msg.className = "auth-msg"; msg.textContent = "Signing up...";
-    const { data: signUpData, error } = await sb.auth.signUp({ email, password });
-    if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; return; }
-    if(signUpData.session){ msg.textContent = ""; }
-    else { msg.textContent = "Check your email to confirm your account, then log in."; }
+  document.getElementById("authSubmitBtn").addEventListener("click", async ()=>{
+    if(authMode === "signup") await doSignUp(); else await doSignIn();
   });
   document.getElementById("signOutBtn").addEventListener("click", async ()=>{
     await sb.auth.signOut();
   });
+
+  document.getElementById("myProfileBtn").addEventListener("click", openProfileScreen);
+  document.getElementById("profCloseBtn").addEventListener("click", ()=>{
+    document.getElementById("profileScreen").style.display = "none";
+    document.getElementById("appScreen").style.display = "block";
+  });
+  document.getElementById("profSaveBtn").addEventListener("click", saveProfile);
+}
+
+async function fileLinkHtml(path, label){
+  if(!path) return `<span class="openings-note">No ${label} uploaded yet.</span>`;
+  const { data, error } = await sb.storage.from("user-files").createSignedUrl(path, 3600);
+  if(error || !data) return `<span class="openings-note">${label} on file (link unavailable).</span>`;
+  return `<a href="${data.signedUrl}" target="_blank" rel="noopener">Current ${label} &#8599;</a>`;
+}
+
+async function openProfileScreen(){
+  document.getElementById("appScreen").style.display = "none";
+  document.getElementById("profileScreen").style.display = "block";
+  const { data: prof } = await sb.from("profiles").select("*").eq("id", currentUser.id).maybeSingle();
+  currentProfile = prof || {};
+  document.getElementById("profFirstName").value = currentProfile.first_name || "";
+  document.getElementById("profLastName").value = currentProfile.last_name || "";
+  document.getElementById("profLocation").value = currentProfile.location || "";
+  document.getElementById("profSpecCheckboxes").innerHTML = specCheckboxesHtml("profSpecCheckboxes", specList({specialization: currentProfile.specialization||""}));
+  document.getElementById("profPortfolioCurrent").innerHTML = await fileLinkHtml(currentProfile.portfolio_path, "portfolio");
+  document.getElementById("profCvCurrent").innerHTML = await fileLinkHtml(currentProfile.cv_path, "CV");
+  document.getElementById("profMsg").textContent = "";
+}
+
+async function saveProfile(){
+  const msg = document.getElementById("profMsg");
+  msg.className = "auth-msg"; msg.textContent = "Saving...";
+  const fields = {
+    first_name: document.getElementById("profFirstName").value.trim(),
+    last_name: document.getElementById("profLastName").value.trim(),
+    location: document.getElementById("profLocation").value.trim(),
+    specialization: getCheckedSpecs("profSpecCheckboxes").join(", ")
+  };
+  const portfolioFile = document.getElementById("profPortfolio").files[0];
+  const cvFile = document.getElementById("profCv").files[0];
+  if(portfolioFile){ const p = await uploadUserFile(currentUser.id, portfolioFile, "portfolio"); if(p) fields.portfolio_path = p; }
+  if(cvFile){ const p = await uploadUserFile(currentUser.id, cvFile, "cv"); if(p) fields.cv_path = p; }
+
+  const { error } = await sb.from("profiles").update(fields).eq("id", currentUser.id);
+  if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; return; }
+  currentProfile = {...currentProfile, ...fields};
+  msg.textContent = "Saved.";
+  renderStats(); renderList();
 }
 
 async function initAuth(){
@@ -788,6 +994,7 @@ async function initAuth(){
     }
     if(event === "SIGNED_OUT"){
       currentUser = null;
+      currentProfile = null;
       data = [];
       showAuthScreen();
     }
