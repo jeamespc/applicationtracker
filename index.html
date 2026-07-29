@@ -103,11 +103,11 @@
     width:44px; flex:0 0 44px; background:var(--status-color, var(--text-faint));
     transition:filter .2s ease, transform .2s ease;
   }
-  .status-node.has-opening{
+  .status-node.lit{
     filter:drop-shadow(0 0 6px var(--stProgress)) brightness(1.25);
     animation:litSquarePulse 2.4s ease-in-out infinite;
   }
-  .status-node.has-opening:hover{
+  .status-node.lit:hover{
     filter:drop-shadow(0 0 10px var(--stProgress)) brightness(1.5);
     transform:scale(1.06);
     animation-play-state:paused;
@@ -783,11 +783,16 @@ function renderList(){
     const open = openIds.has(item.id);
     const due = isFollowUpDue(item);
     const selected = selectedIds.has(item.id);
+    const hasOpening = item.openingsStatus==="Open listing found";
+    const lit = hasOpening || item.status==="In Progress";
+    const litReason = hasOpening && item.status==="In Progress"
+      ? " — has an active opening, and you're in progress"
+      : hasOpening ? " — has an active opening" : item.status==="In Progress" ? " — in progress" : "";
     return `
     <div class="card ${open?'open':''} ${selected?'selected':''}" style="--status-color:var(${statusVars[0]})" data-card="${item.id}">
       <div class="card-head" data-toggle="${item.id}">
         ${selectMode ? `<input type="checkbox" class="select-checkbox" data-select="${item.id}" ${selected?"checked":""} onclick="event.stopPropagation()">` : ""}
-        <span class="status-node${item.openingsStatus==="Open listing found"?" has-opening":""}" style="background:var(${statusVars[0]})" title="${escapeHtml(item.status)}${item.openingsStatus==="Open listing found"?" — has an active opening":""}"></span>
+        <span class="status-node${lit?" lit":""}" style="background:var(${statusVars[0]})" title="${escapeHtml(item.status)}${litReason}"></span>
         <div class="card-head-main">
           <span class="name">${escapeHtml(item.studio)}</span>
           ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
