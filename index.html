@@ -166,6 +166,24 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
   #importFile{display:none;}
+
+  .auth-wrap{display:flex; justify-content:center; padding:60px 20px;}
+  .auth-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:24px; width:100%; max-width:340px;
+  }
+  .auth-card h2{margin:0 0 4px; font-size:1.1rem;}
+  .auth-card .field{margin-top:12px;}
+  .auth-msg{font-size:0.8rem; color:var(--text-dim); min-height:1.2em; margin-top:10px;}
+  .auth-msg.error{color:var(--stRejected);}
+  #authBar{display:none; align-items:center; gap:10px; margin-top:10px;}
+  #authBar .who{font-size:0.8rem; color:var(--text-dim);}
+  .starter-prompt{
+    text-align:center; padding:40px 20px; color:var(--text-dim); font-size:0.9rem;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+  }
+  .starter-prompt .btn{margin-top:12px;}
+  #addCompanyForm{display:none;}
 </style>
 </head>
 <body>
@@ -173,35 +191,70 @@
   <header class="top">
     <h1>Application Tracker</h1>
     <p class="sub">Track every application from first contact to offer, in one place.</p>
+    <div id="authBar">
+      <span class="who" id="authWho"></span>
+      <button class="btn" id="signOutBtn">Sign out</button>
+    </div>
   </header>
 
-  <div class="stats" id="stats"></div>
-
-  <div class="toolbar">
-    <input type="search" id="search" placeholder="Search studio, discipline, notes...">
-    <select id="filterStatus"></select>
-    <select id="filterChannel"></select>
-    <select id="filterSpec"></select>
-    <select id="sortBy">
-      <option value="status">Sort: Status</option>
-      <option value="name">Sort: Studio A–Z</option>
-      <option value="followup">Sort: Follow-up date</option>
-      <option value="teamSize">Sort: Team size</option>
-    </select>
-    <div class="spacer"></div>
-    <button class="btn danger" id="resetBtn">Reset to original list</button>
-    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  <div id="authScreen" style="display:none;">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <h2>Sign in</h2>
+        <p class="sub">Your own private list, synced to your account.</p>
+        <div class="field"><label>Email</label><input type="email" id="authEmail" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="authPassword" autocomplete="current-password"></div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn primary" id="signInBtn">Log in</button>
+          <button class="btn" id="signUpBtn">Sign up</button>
+        </div>
+        <p class="auth-msg" id="authMsg"></p>
+      </div>
+    </div>
   </div>
 
-  <div class="list" id="list"></div>
-  <div class="empty" id="emptyMsg" style="display:none;">No studios match this filter.</div>
+  <div id="appScreen" style="display:none;">
+    <div class="stats" id="stats"></div>
 
-  <details class="help">
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="Search studio, discipline, notes...">
+      <select id="filterStatus"></select>
+      <select id="filterChannel"></select>
+      <select id="filterSpec"></select>
+      <select id="sortBy">
+        <option value="status">Sort: Status</option>
+        <option value="name">Sort: Studio A–Z</option>
+        <option value="followup">Sort: Follow-up date</option>
+        <option value="teamSize">Sort: Team size</option>
+      </select>
+      <div class="spacer"></div>
+      <button class="btn primary" id="addCompanyBtn">+ Add company</button>
+      <button class="btn danger" id="resetBtn">Reset to starter list</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+
+    <div class="toolbar" id="addCompanyForm">
+      <input type="text" id="newStudioName" placeholder="Company name">
+      <input type="text" id="newStudioWebsite" placeholder="https://example.com (optional)">
+      <button class="btn primary" id="saveNewCompanyBtn">Add</button>
+      <button class="btn" id="cancelNewCompanyBtn">Cancel</button>
+    </div>
+
+    <div class="starter-prompt" id="starterPrompt" style="display:none;">
+      Your list is empty.
+      <div><button class="btn primary" id="loadStarterBtn">Load starter list (22 Milan design studios)</button></div>
+      or use "+ Add company" above to start your own from scratch.
+    </div>
+
+    <div class="list" id="list"></div>
+    <div class="empty" id="emptyMsg" style="display:none;">No studios match this filter.</div>
+
+    <details class="help">
     <summary>How this works</summary>
     <div class="help-body">
-      <p>Your edits save automatically to this browser (localStorage), tied to this file.</p>
+      <p>Your data lives in your account (Supabase) and syncs wherever you log in. Each account's list is private — nobody else can see or edit it.</p>
       <h4>Backup your data</h4>
-      <p>Save a copy outside the browser occasionally — especially before clearing browser data or switching machines.</p>
+      <p>Export a local copy occasionally as a safety net.</p>
       <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
         <button class="btn" id="exportJson">Export backup (JSON)</button>
         <button class="btn" id="importJsonBtn">Import backup</button>
@@ -227,13 +280,35 @@
       </ul>
       <p>Some Location, Team Size and Contact fields are blank where the original notes didn't specify — confirm before applying rather than assuming.</p>
     </div>
-  </details>
+    </details>
+  </div>
 </div>
 
 <div class="toast" id="toast">Saved</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const STORAGE_KEY = "jeame_application_tracker_v1";
+const SUPABASE_URL = "https://dezilpkavkwcmidxlxhy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRlemlscGthdmt3Y21pZHhseGh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMzA3MjYsImV4cCI6MjEwMDkwNjcyNn0.oPpNnZOLnvGTvcfJ6jHdV6p7K5_PBcYPLU9oC3MQMQQ";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const FIELD_MAP = {
+  studio:"studio", status:"status", channel:"channel", contact:"contact", location:"location",
+  teamSize:"team_size", discipline:"discipline", website:"website", specialization:"specialization",
+  whyFits:"why_fits", portfolioPieces:"portfolio_pieces", dateApplied:"date_applied",
+  followUpDate:"follow_up_date", responseLog:"response_log",
+  openingsStatus:"openings_status", openingsUrl:"openings_url", openingsNote:"openings_note", openingsChecked:"openings_checked"
+};
+function rowToItem(row){
+  const item = {id: row.id};
+  for(const jsKey in FIELD_MAP) item[jsKey] = row[FIELD_MAP[jsKey]] ?? "";
+  return item;
+}
+function itemToRow(item){
+  const row = {};
+  for(const jsKey in FIELD_MAP) row[FIELD_MAP[jsKey]] = item[jsKey] || null;
+  return row;
+}
 
 const STATUS_OPTIONS = ["Interested","Ready to Apply","Applied","In Progress","Rejected"];
 const CHANNEL_OPTIONS = ["Email","Website"];
@@ -281,26 +356,57 @@ const SEED = [
 
 let data = [];
 let openIds = new Set();
+let currentUser = null;
 
-function loadData(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(raw){
-    try{ data = JSON.parse(raw); return; }catch(e){ /* fall through to seed */ }
-  }
-  data = SEED.map((s,i)=>({...s, id:i+1}));
-  saveData();
+async function loadDataFromDb(){
+  const { data: rows, error } = await sb.from("studios").select("*").order("created_at", {ascending:true});
+  if(error){ showToast("Load failed: " + error.message, true); data = []; return; }
+  data = rows.map(rowToItem);
 }
-function saveData(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+async function insertStarterList(){
+  const rows = SEED.map(itemToRow);
+  const { data: inserted, error } = await sb.from("studios").insert(rows).select();
+  if(error){ showToast("Load failed: " + error.message, true); return; }
+  data = data.concat(inserted.map(rowToItem));
+  renderAll();
+}
+
+async function addCompany(studio, website){
+  const row = { studio, website: website || null, status: "Interested" };
+  const { data: inserted, error } = await sb.from("studios").insert([row]).select();
+  if(error){ showToast("Couldn't add: " + error.message, true); return; }
+  data.push(rowToItem(inserted[0]));
+  renderAll();
+}
+
+async function updateField(id, key, value){
+  const item = data.find(d=>d.id===id);
+  if(!item) return;
+  item[key] = value;
+  const dbKey = FIELD_MAP[key];
+  const { error } = await sb.from("studios").update({[dbKey]: value === "" ? null : value}).eq("id", id);
+  if(error){ showToast("Save failed: " + error.message, true); return; }
   showToast("Saved");
 }
+
+async function deleteItem(id){
+  if(!confirm("Remove this studio from your list? This can't be undone.")) return;
+  const { error } = await sb.from("studios").delete().eq("id", id);
+  if(error){ showToast("Delete failed: " + error.message, true); return; }
+  data = data.filter(d=>d.id!==id);
+  openIds.delete(id);
+  renderAll();
+}
+
 let toastTimer;
-function showToast(msg){
+function showToast(msg, isError){
   const t = document.getElementById("toast");
   t.textContent = msg;
+  t.style.background = isError ? "var(--stRejected)" : "var(--accent)";
   t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove("show"), 1200);
+  toastTimer = setTimeout(()=>t.classList.remove("show"), isError ? 3000 : 1200);
 }
 
 function isFollowUpDue(item){
@@ -455,6 +561,14 @@ function escapeHtml(s){
 
 function renderList(){
   const listEl = document.getElementById("list");
+  const starterPrompt = document.getElementById("starterPrompt");
+  if(data.length === 0){
+    starterPrompt.style.display = "block";
+    listEl.innerHTML = "";
+    document.getElementById("emptyMsg").style.display = "none";
+    return;
+  }
+  starterPrompt.style.display = "none";
   const items = sortItems(data.filter(matchesFilters));
   document.getElementById("emptyMsg").style.display = items.length? "none":"block";
 
@@ -491,6 +605,7 @@ function renderList(){
           ${fieldRow(item,"whyFits","Why It Fits / Notes","textarea")}
           ${fieldRow(item,"responseLog","Response Log","textarea")}
           ${openingsRow(item)}
+          <div class="field full"><button class="btn danger" data-delete="${item.id}">Remove from my list</button></div>
         </div>
       </div>
     </div>`;
@@ -498,7 +613,7 @@ function renderList(){
 
   listEl.querySelectorAll("[data-toggle]").forEach(el=>{
     el.addEventListener("click", ()=>{
-      const id = Number(el.getAttribute("data-toggle"));
+      const id = el.getAttribute("data-toggle");
       if(openIds.has(id)) openIds.delete(id); else openIds.add(id);
       renderList();
     });
@@ -506,14 +621,17 @@ function renderList(){
   listEl.querySelectorAll(".status-select").forEach(el=>{
     el.addEventListener("click", (e)=> e.stopPropagation());
   });
+  listEl.querySelectorAll("[data-delete]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      deleteItem(el.getAttribute("data-delete"));
+    });
+  });
   listEl.querySelectorAll("[data-key]").forEach(el=>{
-    const handler = ()=>{
-      const id = Number(el.getAttribute("data-id"));
+    const handler = async ()=>{
+      const id = el.getAttribute("data-id");
       const key = el.getAttribute("data-key");
-      const item = data.find(d=>d.id===id);
-      if(!item) return;
-      item[key] = el.value;
-      saveData();
+      await updateField(id, key, el.value);
       renderStats();
       if(["status","channel","studio","followUpDate","website","specialization"].includes(key)){
         renderList();
@@ -561,13 +679,15 @@ function wireToolbar(){
     const file = e.target.files[0];
     if(!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try{
         const parsed = JSON.parse(reader.result);
         if(!Array.isArray(parsed)) throw new Error("not an array");
-        if(!confirm("Replace current data with this backup? This overwrites what's currently on screen.")) return;
-        data = parsed.map((d,i)=>({id:i+1, ...d}));
-        saveData();
+        if(!confirm(`Add ${parsed.length} studios from this backup to your current list? (Existing entries are untouched.)`)) return;
+        const rows = parsed.map(itemToRow);
+        const { data: inserted, error } = await sb.from("studios").insert(rows).select();
+        if(error){ showToast("Import failed: " + error.message, true); return; }
+        data = data.concat(inserted.map(rowToItem));
         renderAll();
       }catch(err){
         alert("Couldn't read that file as a valid backup JSON.");
@@ -577,12 +697,35 @@ function wireToolbar(){
     e.target.value = "";
   });
 
-  document.getElementById("resetBtn").addEventListener("click", ()=>{
-    if(!confirm("Reset to the original list? This discards all edits you've made in this tracker.")) return;
-    data = SEED.map((s,i)=>({...s, id:i+1}));
-    saveData();
-    renderAll();
+  document.getElementById("resetBtn").addEventListener("click", async ()=>{
+    if(!confirm("Replace your ENTIRE list with the original 22 Milan studios? This deletes everything currently in your list first.")) return;
+    const ids = data.map(d=>d.id);
+    if(ids.length){
+      const { error } = await sb.from("studios").delete().in("id", ids);
+      if(error){ showToast("Reset failed: " + error.message, true); return; }
+    }
+    data = [];
+    await insertStarterList();
   });
+
+  document.getElementById("addCompanyBtn").addEventListener("click", ()=>{
+    document.getElementById("addCompanyForm").style.display = "flex";
+    document.getElementById("newStudioName").focus();
+  });
+  document.getElementById("cancelNewCompanyBtn").addEventListener("click", ()=>{
+    document.getElementById("addCompanyForm").style.display = "none";
+  });
+  document.getElementById("saveNewCompanyBtn").addEventListener("click", async ()=>{
+    const nameEl = document.getElementById("newStudioName");
+    const siteEl = document.getElementById("newStudioWebsite");
+    const name = nameEl.value.trim();
+    const site = siteEl.value.trim();
+    if(!name){ alert("Company name is required."); return; }
+    await addCompany(name, site);
+    nameEl.value = ""; siteEl.value = "";
+    document.getElementById("addCompanyForm").style.display = "none";
+  });
+  document.getElementById("loadStarterBtn").addEventListener("click", insertStarterList);
 }
 
 function downloadBlob(blob, filename){
@@ -593,9 +736,67 @@ function downloadBlob(blob, filename){
   URL.revokeObjectURL(url);
 }
 
-loadData();
+function showAuthScreen(){
+  document.getElementById("authScreen").style.display = "block";
+  document.getElementById("appScreen").style.display = "none";
+  document.getElementById("authBar").style.display = "none";
+}
+
+async function onLoggedIn(user){
+  currentUser = user;
+  document.getElementById("authScreen").style.display = "none";
+  document.getElementById("appScreen").style.display = "block";
+  document.getElementById("authBar").style.display = "flex";
+  document.getElementById("authWho").textContent = user.email;
+  await loadDataFromDb();
+  renderAll();
+}
+
+function wireAuth(){
+  document.getElementById("signInBtn").addEventListener("click", async ()=>{
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    const msg = document.getElementById("authMsg");
+    msg.className = "auth-msg"; msg.textContent = "Signing in...";
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; }
+  });
+  document.getElementById("signUpBtn").addEventListener("click", async ()=>{
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    const msg = document.getElementById("authMsg");
+    if(password.length < 6){ msg.className = "auth-msg error"; msg.textContent = "Password must be at least 6 characters."; return; }
+    msg.className = "auth-msg"; msg.textContent = "Signing up...";
+    const { data: signUpData, error } = await sb.auth.signUp({ email, password });
+    if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; return; }
+    if(signUpData.session){ msg.textContent = ""; }
+    else { msg.textContent = "Check your email to confirm your account, then log in."; }
+  });
+  document.getElementById("signOutBtn").addEventListener("click", async ()=>{
+    await sb.auth.signOut();
+  });
+}
+
+async function initAuth(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session){ await onLoggedIn(session.user); }
+  else{ showAuthScreen(); }
+
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event === "SIGNED_IN" && session && (!currentUser || currentUser.id !== session.user.id)){
+      onLoggedIn(session.user);
+    }
+    if(event === "SIGNED_OUT"){
+      currentUser = null;
+      data = [];
+      showAuthScreen();
+    }
+  });
+}
+
 wireToolbar();
-renderAll();
+wireAuth();
+initAuth();
 </script>
 </body>
 </html>
