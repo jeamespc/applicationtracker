@@ -9,16 +9,11 @@
     --bg:#f5f4f1; --surface:#ffffff; --surface-2:#fafaf8; --border:#e2e0da;
     --text:#1c1b19; --text-dim:#6b6862; --text-faint:#9b9790;
     --accent:#1c1b19; --accent-contrast:#ffffff;
-    --ready:#e7c200; --ready-bg:#fdf6d8;
-    --tierApplied:#0d7d72; --tierApplied-bg:#d7f1ec;
-    --strong:#d9720b; --strong-bg:#fbe6d2;
-    --diff:#c98a4b; --diff-bg:#f6e4d4;
-    --rej:#c23b3b; --rej-bg:#fadada;
-    --resp:#3f8a52; --resp-bg:#dcefe0;
-    --applied:#8a7a1f; --applied-bg:#f1edd4;
-    --interview:#2f6fa8; --interview-bg:#d9e8f5;
-    --offer:#1f7a3d; --offer-bg:#d3ecdb;
-    --declined:#6b6862; --declined-bg:#e6e4df;
+    --stReady:#e7c200; --stReady-bg:#fdf6d8;
+    --stApplied:#0d7d72; --stApplied-bg:#d7f1ec;
+    --stProgress:#3f8a52; --stProgress-bg:#dcefe0;
+    --stRejected:#c23b3b; --stRejected-bg:#fadada;
+    --link:#2f6fa8;
     --shadow: 0 1px 2px rgba(20,18,14,0.06), 0 1px 6px rgba(20,18,14,0.05);
     --radius: 12px;
   }
@@ -27,16 +22,11 @@
       --bg:#171614; --surface:#211f1c; --surface-2:#26241f; --border:#3a3733;
       --text:#f0eee9; --text-dim:#b7b3ab; --text-faint:#847f76;
       --accent:#f0eee9; --accent-contrast:#171614;
-      --ready:#e7c200; --ready-bg:#3a341a;
-      --tierApplied:#4fd1c0; --tierApplied-bg:#163330;
-      --strong:#e8873a; --strong-bg:#3c2c1a;
-      --diff:#d8a06e; --diff-bg:#38291d;
-      --rej:#e06060; --rej-bg:#3d2222;
-      --resp:#5cb373; --resp-bg:#20342a;
-      --applied:#cbb43a; --applied-bg:#33301c;
-      --interview:#6ba9dd; --interview-bg:#1f2e3d;
-      --offer:#4dbf78; --offer-bg:#1c3327;
-      --declined:#9a968d; --declined-bg:#2c2a26;
+      --stReady:#e7c200; --stReady-bg:#3a341a;
+      --stApplied:#4fd1c0; --stApplied-bg:#163330;
+      --stProgress:#5cb373; --stProgress-bg:#20342a;
+      --stRejected:#e06060; --stRejected-bg:#3d2222;
+      --link:#6ba9dd;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 2px 10px rgba(0,0,0,0.25);
     }
   }
@@ -44,16 +34,11 @@
     --bg:#171614; --surface:#211f1c; --surface-2:#26241f; --border:#3a3733;
     --text:#f0eee9; --text-dim:#b7b3ab; --text-faint:#847f76;
     --accent:#f0eee9; --accent-contrast:#171614;
-    --ready:#e7c200; --ready-bg:#3a341a;
-    --tierApplied:#4fd1c0; --tierApplied-bg:#163330;
-    --strong:#e8873a; --strong-bg:#3c2c1a;
-    --diff:#d8a06e; --diff-bg:#38291d;
-    --rej:#e06060; --rej-bg:#3d2222;
-    --resp:#5cb373; --resp-bg:#20342a;
-    --applied:#cbb43a; --applied-bg:#33301c;
-    --interview:#6ba9dd; --interview-bg:#1f2e3d;
-    --offer:#4dbf78; --offer-bg:#1c3327;
-    --declined:#9a968d; --declined-bg:#2c2a26;
+    --stReady:#e7c200; --stReady-bg:#3a341a;
+    --stApplied:#4fd1c0; --stApplied-bg:#163330;
+    --stProgress:#5cb373; --stProgress-bg:#20342a;
+    --stRejected:#e06060; --stRejected-bg:#3d2222;
+    --link:#6ba9dd;
   }
   :root[data-theme="light"]{
     --bg:#f5f4f1; --surface:#ffffff; --surface-2:#fafaf8; --border:#e2e0da;
@@ -78,7 +63,6 @@
   .stat.active{border-color:var(--accent); box-shadow:var(--shadow), 0 0 0 2px var(--accent) inset;}
   .stat .n{font-size:1.4rem; font-weight:700; line-height:1;}
   .stat .l{font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-dim); margin-top:4px;}
-  .stat.due .n{color:var(--rej);}
 
   .toolbar{
     display:flex; flex-wrap:wrap; gap:8px; align-items:center;
@@ -98,19 +82,22 @@
   }
   .btn:hover{border-color:var(--text-faint);}
   .btn.primary{background:var(--accent); color:var(--accent-contrast); border-color:var(--accent);}
-  .btn.danger{color:var(--rej); border-color:var(--rej);}
+  .btn.danger{color:var(--stRejected); border-color:var(--stRejected);}
 
   .list{display:flex; flex-direction:column; gap:8px;}
   .card{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    box-shadow:var(--shadow); overflow:hidden; border-left:4px solid var(--tier-color, var(--border));
+    box-shadow:var(--shadow); overflow:hidden; border-left:4px solid var(--status-color, var(--border));
   }
   .card-head{
     display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer;
   }
   .card-head .name{font-weight:600; font-size:0.95rem; flex:1 1 auto; min-width:120px;}
-  .card-head .meta{color:var(--text-dim); font-size:0.78rem; display:none;}
+  .card-head .meta{color:var(--text-dim); font-size:0.78rem; display:none; white-space:nowrap;}
   @media(min-width:640px){ .card-head .meta{display:block;} }
+  .due-dot{width:8px; height:8px; border-radius:50%; background:var(--stRejected); flex:0 0 auto;}
+  .site-link{color:var(--link); text-decoration:none; font-size:0.85rem; flex:0 0 auto; line-height:1;}
+  .site-link:hover{text-decoration:underline;}
 
   .badge{
     display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px;
@@ -118,6 +105,14 @@
   }
   .chev{color:var(--text-faint); transition:transform .15s ease; flex:0 0 auto;}
   .card.open .chev{transform:rotate(90deg);}
+
+  .status-select{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:999px; padding:5px 26px 5px 12px; font-size:0.75rem; font-weight:600;
+    font-family:inherit; cursor:pointer; flex:0 0 auto; -webkit-appearance:none; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%239b9790' d='M2.5 4.5l3.5 3.5 3.5-3.5z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 8px center; background-size:10px;
+  }
 
   .card-body{display:none; padding:0 14px 16px; border-top:1px solid var(--border);}
   .card.open .card-body{display:block;}
@@ -131,8 +126,13 @@
     border-radius:8px; padding:7px 9px; font-size:0.85rem; font-family:inherit; width:100%;
   }
   .field textarea{resize:vertical; min-height:44px; line-height:1.4;}
-  .field a.mailto{font-size:0.8rem; color:var(--interview); text-decoration:none; margin-top:2px;}
+  .field a.mailto{font-size:0.8rem; color:var(--link); text-decoration:none; margin-top:2px;}
   .field a.mailto:hover{text-decoration:underline;}
+
+  .openings-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:0.8rem;}
+  .openings-row a{color:var(--link); text-decoration:none; word-break:break-all;}
+  .openings-row a:hover{text-decoration:underline;}
+  .openings-note{color:var(--text-dim); font-size:0.78rem; width:100%;}
 
   .why-preview{
     font-size:0.8rem; color:var(--text-dim); padding:0 14px 12px; margin-top:-6px;
@@ -164,7 +164,7 @@
 <div class="wrap">
   <header class="top">
     <h1>Application Tracker</h1>
-    <p class="sub">Track every application from first contact to offer — right in the browser, no spreadsheet software required.</p>
+    <p class="sub">Track every application from first contact to offer, in one place.</p>
   </header>
 
   <div class="stats" id="stats"></div>
@@ -172,20 +172,17 @@
   <div class="toolbar">
     <input type="search" id="search" placeholder="Search studio, discipline, notes...">
     <select id="filterStatus"></select>
-    <select id="filterTier"></select>
     <select id="filterChannel"></select>
+    <select id="filterSpec"></select>
     <select id="sortBy">
-      <option value="tier">Sort: Fit Tier</option>
-      <option value="name">Sort: Studio A–Z</option>
       <option value="status">Sort: Status</option>
+      <option value="name">Sort: Studio A–Z</option>
       <option value="followup">Sort: Follow-up date</option>
+      <option value="teamSize">Sort: Team size</option>
     </select>
     <div class="spacer"></div>
-    <button class="btn" id="exportJson">Export backup (JSON)</button>
-    <button class="btn" id="importJsonBtn">Import backup</button>
-    <button class="btn" id="exportCsv">Export CSV</button>
     <button class="btn danger" id="resetBtn">Reset to original list</button>
-    <input type="file" id="importFile" accept="application/json">
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
   </div>
 
   <div class="list" id="list"></div>
@@ -194,21 +191,30 @@
   <details class="help">
     <summary>How this works</summary>
     <div class="help-body">
-      <p>Your edits save automatically to this browser (localStorage), tied to this file. Use <strong>Export backup</strong> occasionally so you have a copy outside the browser — especially before clearing browser data or switching machines.</p>
-      <h4>Fit tier (carried over from The List)</h4>
-      <div class="legend-row"><span class="swatch" style="background:var(--ready)"></span>Ready to Apply — top of the list, apply first.</div>
-      <div class="legend-row"><span class="swatch" style="background:var(--tierApplied)"></span>Applied — already sent, waiting to hear back.</div>
-      <div class="legend-row"><span class="swatch" style="background:var(--strong)"></span>Strong Fit — good match, not yet contacted.</div>
-      <div class="legend-row"><span class="swatch" style="background:var(--diff)"></span>Different Angle — adjacent/backup option, not a core studio fit.</div>
-      <div class="legend-row"><span class="swatch" style="background:var(--rej)"></span>Rejected — not pursuing. Onsitestudio is pre-filled here from the original doc, but its own note flags open slots and a toolkit match, so it's worth a second look before fully closing that door.</div>
+      <p>Your edits save automatically to this browser (localStorage), tied to this file.</p>
+      <h4>Backup your data</h4>
+      <p>Save a copy outside the browser occasionally — especially before clearing browser data or switching machines.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+        <button class="btn" id="exportJson">Export backup (JSON)</button>
+        <button class="btn" id="importJsonBtn">Import backup</button>
+        <button class="btn" id="exportCsv">Export CSV</button>
+      </div>
+      <h4>Status</h4>
+      <div class="legend-row"><span class="swatch" style="background:var(--stReady)"></span>Ready to Apply — haven't sent anything yet.</div>
+      <div class="legend-row"><span class="swatch" style="background:var(--stApplied)"></span>Applied — sent, waiting to hear back.</div>
+      <div class="legend-row"><span class="swatch" style="background:var(--stProgress)"></span>In Progress — they've responded, you're past the first stage. Good sign.</div>
+      <div class="legend-row"><span class="swatch" style="background:var(--stRejected)"></span>Rejected — not pursuing. Onsitestudio is pre-filled here from the original doc, but its own note flags open slots and a toolkit match, so it's worth a second look before fully closing that door.</div>
+      <p>The dropdown on each studio's row (right side, next to the channel/location) edits Status directly without opening the card.</p>
+      <h4>Openings check</h4>
+      <p>Each studio's card (expand it to see) has an Openings Check row from an automated site check — whether their site currently shows an internship/junior listing, a link to what was checked, and the date. Treat "Open listing found" that isn't a dated posting as worth a speculative email, not a confirmed vacancy.</p>
       <h4>Suggested workflow per studio</h4>
       <ul>
         <li>Confirm the contact or posting is still live.</li>
         <li>Pick portfolio pieces to feature, using the "Why It Fits" note as a guide.</li>
         <li>Tailor your CV and a short intro email or website application.</li>
         <li>Send — set Status to "Applied", fill Date Applied, set Follow-up Date (~2 weeks out).</li>
-        <li>On response, update Status and log it in Response Log.</li>
-        <li>Check the "Follow-ups due" stat at the top when you open this page — that's your action list.</li>
+        <li>On response, set Status to "In Progress" and log it in Response Log.</li>
+        <li>A small red dot on a card means its follow-up date has arrived — that's your action list.</li>
       </ul>
       <p>Some Location, Team Size and Contact fields are blank where the original notes didn't specify — confirm before applying rather than assuming.</p>
     </div>
@@ -220,56 +226,47 @@
 <script>
 const STORAGE_KEY = "jeame_application_tracker_v1";
 
-const STATUS_OPTIONS = ["Not Started","Drafting","Applied","Responded","Interview","Offer","Rejected","Declined"];
-const TIER_OPTIONS = ["Ready to Apply","Applied","Strong Fit","Different Angle","Rejected — Automatic (No Place)","Rejected — Assessed"];
+const STATUS_OPTIONS = ["Ready to Apply","Applied","In Progress","Rejected"];
 const CHANNEL_OPTIONS = ["Email","Website"];
+const SPECIALIZATION_OPTIONS = ["Interior","Exhibit","Architecture","Urban","Product","Manufacturing"];
 
-const TIER_COLOR_VAR = {
-  "Ready to Apply": ["--ready","--ready-bg"],
-  "Applied": ["--tierApplied","--tierApplied-bg"],
-  "Strong Fit": ["--strong","--strong-bg"],
-  "Different Angle": ["--diff","--diff-bg"],
-  "Rejected — Automatic (No Place)": ["--rej","--rej-bg"],
-  "Rejected — Assessed": ["--rej","--rej-bg"]
-};
 const STATUS_COLOR_VAR = {
-  "Not Started": ["--text-faint","--surface-2"],
-  "Drafting": ["--text-dim","--surface-2"],
-  "Applied": ["--applied","--applied-bg"],
-  "Responded": ["--resp","--resp-bg"],
-  "Interview": ["--interview","--interview-bg"],
-  "Offer": ["--offer","--offer-bg"],
-  "Rejected": ["--rej","--rej-bg"],
-  "Declined": ["--declined","--declined-bg"]
+  "Ready to Apply": ["--stReady","--stReady-bg"],
+  "Applied": ["--stApplied","--stApplied-bg"],
+  "In Progress": ["--stProgress","--stProgress-bg"],
+  "Rejected": ["--stRejected","--stRejected-bg"]
 };
-const TIER_SORT_ORDER = {
-  "Ready to Apply": 0, "Applied": 1, "Strong Fit": 2, "Different Angle": 3,
-  "Rejected — Automatic (No Place)": 4, "Rejected — Assessed": 5
+const STATUS_SORT_ORDER = {"Ready to Apply":0, "Applied":1, "In Progress":2, "Rejected":3};
+
+const OPENINGS_COLOR_VAR = {
+  "Open listing found": ["--stProgress","--stProgress-bg"],
+  "Nothing posted": ["--text-faint","--surface-2"],
+  "Couldn't determine": ["--stReady","--stReady-bg"]
 };
 
 const SEED = [
-  {studio:"Matteo Thun & Partners", status:"Not Started", tier:"Ready to Apply", channel:"Website", contact:"", location:"Milan + Munich", teamSize:"~70", discipline:"Architecture, interior, product, exhibition design", whyFits:"Major pedigree (Thun co-founded Memphis Group with Sottsass). Live Junior Interior Designer posting right now, plus an actual connection through CrippaConcept.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Formafantasma", status:"Not Started", tier:"Ready to Apply", channel:"Email", contact:"work@formafantasma.com", location:"Milan/Rotterdam", teamSize:"", discipline:"Design research (material & ecological)", whyFits:"Research studio (Trimarchi & Farresin); treats design as material and ecological research rather than styling — form follows the research, not the other way around. Your strongest match.", portfolioPieces:"DEMY, Palazzo Bianco", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Atelierzero", status:"Not Started", tier:"Ready to Apply", channel:"Email", contact:"info@atelierzero.it", location:"", teamSize:"3 founders", discipline:"Residential / retail / product", whyFits:"Built on “emotional design with conceptual clarity.” Language very close to your own design philosophy; also a registered internship host.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Atelier Biagetti", status:"Not Started", tier:"Ready to Apply", channel:"Email", contact:"info@atelierbiagetti.com", location:"Milan (Navigli)", teamSize:"2 (duo)", discipline:"Furniture / art-object design", whyFits:"Treat every project like a movie: surreal, theatrical, art-object furniture. Closest Milan equivalent to Supaform's small, authorial, provocative spirit.", portfolioPieces:"Supaform", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Migliore+Servetto", status:"Not Started", tier:"Ready to Apply", channel:"Email", contact:"job@miglioreservetto.com", location:"", teamSize:"", discipline:"Scenography / exhibition design", whyFits:"Trained under Castiglioni; museums and “narrative spaces” built around the visitor's journey. Probably your single best match — designing how people move through and encounter a space is their literal discipline.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Park Associati", status:"Not Started", tier:"Strong Fit", channel:"Website", contact:"", location:"", teamSize:"Mid-large", discipline:"Architecture & interior (corporate / retail)", whyFits:"Corporate HQ and retail-scale architecture and interior design. Less personal-narrative fit, but size means real hiring turnover.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Vudafieri-Saverino Partners", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"info@vudafierisaverino.it", location:"", teamSize:"", discipline:"Retail, hospitality, restaurants", whyFits:"Storytelling explicitly named as their method (ex-Sottsass pedigree). Their framing of “Concept Design and Storytelling Strategy” mirrors how you talk about your own process.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Locatelli Partners", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"design@locatellipartners.com", location:"Milan + NY", teamSize:"~60", discipline:"Architecture & interiors", whyFits:"Material- and tech-research-driven. Prominent and well-resourced — a solid junior-role bet.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Studiopepe", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"apply@studiopepe.info", location:"", teamSize:"", discipline:"Interiors (retail / hospitality / residential)", whyFits:"Eclectic, art-directed, materially rich interiors. Probably your closest single aesthetic match overall.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Dimorestudio", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"careers@dimorestudio.eu", location:"", teamSize:"40+", discipline:"Interiors (fashion / hospitality)", whyFits:"Moody, atmospheric, “total work of art” interiors for major fashion and hospitality clients. Strong atmospheric match; has an active careers channel worth trying, though no live posting right now.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Cristina Celestino", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"info@cristinacelestino.com", location:"", teamSize:"Small (personal-name studio)", discipline:"Residential & product design", whyFits:"Maximalist, color- and pattern-driven residential and product design. Closest to an authorial, small-scale practice like Supaform.", portfolioPieces:"Supaform", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Calvi Brambilla", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"studio@calvibrambilla.it", location:"", teamSize:"Small team", discipline:"Interiors, exhibitions, product", whyFits:"“Subtle irony”; teaching ties to Politecnico. Real exhibition-design chops at boutique scale — a good complement to Migliore+Servetto.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Atomaa", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"jobs@atomaa.eu", location:"Milan + Edinburgh", teamSize:"3 partners", discipline:"Residential / micro-living", whyFits:"Hands-on material detailing. Boutique scale, close to your interior/spatial focus.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Studio MI·LO", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"", location:"Milan + London", teamSize:"Small boutique", discipline:"Interiors", whyFits:"Evocative interiors. Good mentorship scale, though the least-researched name on this list — confirm details before applying.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Lascia la Scia", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"", location:"", teamSize:"5 founding women architects", discipline:"Architecture", whyFits:"Runs its own coworking lab; warm, collaborative culture. Craft-forward, community-minded — feels like a place that mentors closely.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Studio WOK", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"", location:"", teamSize:"3 partners", discipline:"Architecture (habitat-focused)", whyFits:"Narrative, habitat-focused architecture. Real, demonstrated investment in training junior designers — they head SPD's Interior Design Master.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Stefano Boeri Architetti", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"hr@stefanoboeriarchitetti.net", location:"Milan/Shanghai/Tirana", teamSize:"Large", discipline:"Ecological urbanism", whyFits:"Large-scale ecological urbanism (Bosco Verticale). Fits your urban/spatial side better than interiors; has a jobs page and open channel.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Studio Klass", status:"Not Started", tier:"Strong Fit", channel:"Email", contact:"careers@studioklass.com", location:"", teamSize:"2 founders", discipline:"Product, interior, creative direction", whyFits:"Teaching ties to IED. Smallest team here, with a direct pipeline from design education.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"CrippaConcept", status:"Not Started", tier:"Different Angle", channel:"Website", contact:"", location:"", teamSize:"", discipline:"Mobile-home / glamping manufacturer", whyFits:"Not a design studio. Your existing warm connection via Prof. Trabattoni, thematically identical to Mechanisma, and the link into Matteo Thun & Partners.", portfolioPieces:"Mechanisma", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Studio Urquiola", status:"Not Started", tier:"Different Angle", channel:"Email", contact:"recruiting@patriciaurquiola.com", location:"", teamSize:"~40", discipline:"Architecture / interior / product", whyFits:"Globally prominent (Patricia Urquiola); expressive, eclectic work. Big CV value; also worth trying for an actual junior role given its size.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"LLABB", status:"Not Started", tier:"Different Angle", channel:"Email", contact:"internship@llabb.eu", location:"Genova (not Milan)", teamSize:"", discipline:"Architecture (craft-rooted)", whyFits:"Began as a carpentry workshop. Confirmed to host interns — worth the commute if hands-on material culture matters more than location.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""},
-  {studio:"Onsitestudio", status:"Rejected", tier:"Rejected — Automatic (No Place)", channel:"Email", contact:"jobs@onsitestudio.it", location:"", teamSize:"~18", discipline:"Architecture", whyFits:"Material- and context-sensitive studio. Officially registered internship host with real open slots; required software matches your toolkit almost exactly — confirm why this was auto-rejected before fully closing the door.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:""}
+  {studio:"Matteo Thun & Partners", status:"Ready to Apply", channel:"Website", contact:"", location:"Milan + Munich", teamSize:"~70", discipline:"Architecture, interior, product, exhibition design", website:"https://www.matteothun.com/", specialization:"Architecture, Interior, Product, Exhibit", whyFits:"Major pedigree (Thun co-founded Memphis Group with Sottsass). Live Junior Interior Designer posting right now, plus an actual connection through CrippaConcept.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://careers.matteothun.com/", openingsNote:"Only Senior Architect roles + open application listed, no junior/intern.", openingsChecked:"2026-07-29"},
+  {studio:"Formafantasma", status:"Ready to Apply", channel:"Email", contact:"work@formafantasma.com", location:"Milan/Rotterdam", teamSize:"", discipline:"Design research (material & ecological)", website:"https://formafantasma.com/", specialization:"Product, Exhibit", whyFits:"Research studio (Trimarchi & Farresin); treats design as material and ecological research rather than styling — form follows the research, not the other way around. Your strongest match.", portfolioPieces:"DEMY, Palazzo Bianco", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://formafantasma.com/studio", openingsNote:"Paid 6-month internship listed “from Feb 2026” — that start date may already be stale, confirm.", openingsChecked:"2026-07-29"},
+  {studio:"Atelierzero", status:"Ready to Apply", channel:"Email", contact:"info@atelierzero.it", location:"", teamSize:"3 founders", discipline:"Residential / retail / product", website:"https://www.atelierzero.it/", specialization:"Interior, Product", whyFits:"Built on “emotional design with conceptual clarity.” Language very close to your own design philosophy; also a registered internship host.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.atelierzero.it/", openingsNote:"No careers section on site; contact email only.", openingsChecked:"2026-07-29"},
+  {studio:"Atelier Biagetti", status:"Ready to Apply", channel:"Email", contact:"info@atelierbiagetti.com", location:"Milan (Navigli)", teamSize:"2 (duo)", discipline:"Furniture / art-object design", website:"https://atelierbiagetti.com/", specialization:"Product", whyFits:"Treat every project like a movie: surreal, theatrical, art-object furniture. Closest Milan equivalent to Supaform's small, authorial, provocative spirit.", portfolioPieces:"Supaform", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://atelierbiagetti.com/", openingsNote:"Generic “Join the team” upload form, no specific listing.", openingsChecked:"2026-07-29"},
+  {studio:"Migliore+Servetto", status:"Ready to Apply", channel:"Email", contact:"job@miglioreservetto.com", location:"", teamSize:"", discipline:"Scenography / exhibition design", website:"https://architettimiglioreservetto.it/", specialization:"Exhibit", whyFits:"Trained under Castiglioni; museums and “narrative spaces” built around the visitor's journey. Probably your single best match — designing how people move through and encounter a space is their literal discipline.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://architettimiglioreservetto.it/", openingsNote:"No careers page; job@ email only, no listing.", openingsChecked:"2026-07-29"},
+  {studio:"Park Associati", status:"Ready to Apply", channel:"Website", contact:"", location:"", teamSize:"Mid-large", discipline:"Architecture & interior (corporate / retail)", website:"https://parkassociati.com/", specialization:"Architecture, Interior", whyFits:"Corporate HQ and retail-scale architecture and interior design. Less personal-narrative fit, but size means real hiring turnover.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://parkassociati.com/career", openingsNote:"Junior 3D Visualizer role currently open.", openingsChecked:"2026-07-29"},
+  {studio:"Vudafieri-Saverino Partners", status:"Ready to Apply", channel:"Email", contact:"info@vudafierisaverino.it", location:"", teamSize:"", discipline:"Retail, hospitality, restaurants", website:"https://www.vudafierisaverino.it/", specialization:"Interior", whyFits:"Storytelling explicitly named as their method (ex-Sottsass pedigree). Their framing of “Concept Design and Storytelling Strategy” mirrors how you talk about your own process.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.vudafierisaverino.it/", openingsNote:"No careers section on homepage, contacts, or studio pages.", openingsChecked:"2026-07-29"},
+  {studio:"Locatelli Partners", status:"Ready to Apply", channel:"Email", contact:"design@locatellipartners.com", location:"Milan + NY", teamSize:"~60", discipline:"Architecture & interiors", website:"https://locatellipartners.com/", specialization:"Architecture, Interior", whyFits:"Material- and tech-research-driven. Prominent and well-resourced — a solid junior-role bet.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://locatellipartners.com/about/", openingsNote:"No careers section found on site.", openingsChecked:"2026-07-29"},
+  {studio:"Studiopepe", status:"Ready to Apply", channel:"Email", contact:"apply@studiopepe.info", location:"", teamSize:"", discipline:"Interiors (retail / hospitality / residential)", website:"https://www.studiopepe.info/", specialization:"Interior", whyFits:"Eclectic, art-directed, materially rich interiors. Probably your closest single aesthetic match overall.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studiopepe.info/", openingsNote:"No careers/jobs section found on site.", openingsChecked:"2026-07-29"},
+  {studio:"Dimorestudio", status:"Ready to Apply", channel:"Email", contact:"careers@dimorestudio.eu", location:"", teamSize:"40+", discipline:"Interiors (fashion / hospitality)", website:"https://www.dimorestudio.eu/", specialization:"Interior", whyFits:"Moody, atmospheric, “total work of art” interiors for major fashion and hospitality clients. Strong atmospheric match; has an active careers channel worth trying, though no live posting right now.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.dimorestudio.eu/careers/", openingsNote:"Careers page explicitly states no positions available right now.", openingsChecked:"2026-07-29"},
+  {studio:"Cristina Celestino", status:"Ready to Apply", channel:"Email", contact:"info@cristinacelestino.com", location:"", teamSize:"Small (personal-name studio)", discipline:"Residential & product design", website:"https://cristinacelestino.com/", specialization:"Interior, Product", whyFits:"Maximalist, color- and pattern-driven residential and product design. Closest to an authorial, small-scale practice like Supaform.", portfolioPieces:"Supaform", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://cristinacelestino.com/studio", openingsNote:"Generic “always looking for talent” call, not internship-specific.", openingsChecked:"2026-07-29"},
+  {studio:"Calvi Brambilla", status:"Ready to Apply", channel:"Email", contact:"studio@calvibrambilla.it", location:"", teamSize:"Small team", discipline:"Interiors, exhibitions, product", website:"https://www.calvibrambilla.it/", specialization:"Interior, Exhibit, Product", whyFits:"“Subtle irony”; teaching ties to Politecnico. Real exhibition-design chops at boutique scale — a good complement to Migliore+Servetto.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Couldn't determine", openingsUrl:"https://www.calvibrambilla.it/", openingsNote:"Site returned server errors on every automated check — try in a regular browser.", openingsChecked:"2026-07-29"},
+  {studio:"Atomaa", status:"Ready to Apply", channel:"Email", contact:"jobs@atomaa.eu", location:"Milan + Edinburgh", teamSize:"3 partners", discipline:"Residential / micro-living", website:"https://atomaa.eu/", specialization:"Interior", whyFits:"Hands-on material detailing. Boutique scale, close to your interior/spatial focus.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://atomaa.eu/", openingsNote:"No careers/jobs section found on site.", openingsChecked:"2026-07-29"},
+  {studio:"Studio MI·LO", status:"Ready to Apply", channel:"Email", contact:"", location:"Milan + London", teamSize:"Small boutique", discipline:"Interiors", website:"https://www.studio-milo.com/", specialization:"Interior", whyFits:"Evocative interiors. Good mentorship scale, though the least-researched name on this list — confirm details before applying.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studio-milo.com/about-us/", openingsNote:"No careers section found; contact emails only.", openingsChecked:"2026-07-29"},
+  {studio:"Lascia la Scia", status:"Ready to Apply", channel:"Email", contact:"", location:"", teamSize:"5 founding women architects", discipline:"Architecture", website:"https://www.lascialascia.com/", specialization:"Architecture", whyFits:"Runs its own coworking lab; warm, collaborative culture. Craft-forward, community-minded — feels like a place that mentors closely.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.lascialascia.com/about/", openingsNote:"No careers section found on site.", openingsChecked:"2026-07-29"},
+  {studio:"Studio WOK", status:"Ready to Apply", channel:"Email", contact:"", location:"", teamSize:"3 partners", discipline:"Architecture (habitat-focused)", website:"https://www.studiowok.com/", specialization:"Architecture", whyFits:"Narrative, habitat-focused architecture. Real, demonstrated investment in training junior designers — they head SPD's Interior Design Master.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studiowok.com/contacts/", openingsNote:"General “work with us” call, requires Archicad, no internship mention.", openingsChecked:"2026-07-29"},
+  {studio:"Stefano Boeri Architetti", status:"Ready to Apply", channel:"Email", contact:"hr@stefanoboeriarchitetti.net", location:"Milan/Shanghai/Tirana", teamSize:"Large", discipline:"Ecological urbanism", website:"https://www.stefanoboeriarchitetti.net/", specialization:"Architecture, Urban", whyFits:"Large-scale ecological urbanism (Bosco Verticale). Fits your urban/spatial side better than interiors; has a jobs page and open channel.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.stefanoboeriarchitetti.net/en/jobs-en/", openingsNote:"Current listings are senior/mid only; the 2022 junior posting link is dead.", openingsChecked:"2026-07-29"},
+  {studio:"Studio Klass", status:"Ready to Apply", channel:"Email", contact:"careers@studioklass.com", location:"", teamSize:"2 founders", discipline:"Product, interior, creative direction", website:"https://studioklass.com/", specialization:"Product, Interior", whyFits:"Teaching ties to IED. Smallest team here, with a direct pipeline from design education.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://studioklass.com/studio", openingsNote:"Standing invite to apply for internships via careers@ — not a dated posting.", openingsChecked:"2026-07-29"},
+  {studio:"CrippaConcept", status:"Ready to Apply", channel:"Website", contact:"", location:"", teamSize:"", discipline:"Mobile-home / glamping manufacturer", website:"https://www.crippaconcept.com/", specialization:"Manufacturing", whyFits:"Not a design studio. Your existing warm connection via Prof. Trabattoni, thematically identical to Mechanisma, and the link into Matteo Thun & Partners.", portfolioPieces:"Mechanisma", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Couldn't determine", openingsUrl:"https://www.crippaconcept.com/en/join-us/", openingsNote:"Site returned server errors on every automated check — try in a regular browser.", openingsChecked:"2026-07-29"},
+  {studio:"Studio Urquiola", status:"Ready to Apply", channel:"Email", contact:"recruiting@patriciaurquiola.com", location:"", teamSize:"~40", discipline:"Architecture / interior / product", website:"https://patriciaurquiola.com/", specialization:"Architecture, Interior, Product", whyFits:"Globally prominent (Patricia Urquiola); expressive, eclectic work. Big CV value; also worth trying for an actual junior role given its size.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://patriciaurquiola.com/contact", openingsNote:"Standing invite to apply for internships via recruiting@ — not a dated posting.", openingsChecked:"2026-07-29"},
+  {studio:"LLABB", status:"Ready to Apply", channel:"Email", contact:"internship@llabb.eu", location:"Genova (not Milan)", teamSize:"", discipline:"Architecture (craft-rooted)", website:"https://llabb.eu/", specialization:"Architecture", whyFits:"Began as a carpentry workshop. Confirmed to host interns — worth the commute if hands-on material culture matters more than location.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://llabb.eu/contact", openingsNote:"Dedicated internship@ address specifically for internship requests.", openingsChecked:"2026-07-29"},
+  {studio:"Onsitestudio", status:"Rejected", channel:"Email", contact:"jobs@onsitestudio.it", location:"", teamSize:"~18", discipline:"Architecture", website:"https://www.onsitestudio.it/", specialization:"Architecture", whyFits:"Material- and context-sensitive studio. Officially registered internship host with real open slots; required software matches your toolkit almost exactly — confirm why this was auto-rejected before fully closing the door.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.onsitestudio.it/", openingsNote:"No careers/jobs links found anywhere in navigation.", openingsChecked:"2026-07-29"}
 ];
 
 let data = [];
@@ -298,7 +295,7 @@ function showToast(msg){
 
 function isFollowUpDue(item){
   if(!item.followUpDate) return false;
-  if(["Rejected","Declined","Offer"].includes(item.status)) return false;
+  if(item.status === "Rejected") return false;
   const today = new Date(); today.setHours(0,0,0,0);
   const fu = new Date(item.followUpDate + "T00:00:00");
   return fu <= today;
@@ -318,10 +315,10 @@ function populateSelect(sel, options, allLabel){
 
 const STAT_DEFS = [
   {id:"total", label:"Total Studios", predicate: ()=>true},
-  {id:"ready", label:"Ready to Apply", predicate: d=>d.tier==="Ready to Apply"},
-  {id:"inprogress", label:"In Progress+", predicate: d=>d.status!=="Not Started" && d.status!=="Drafting"},
-  {id:"responded", label:"Responded+", predicate: d=>["Responded","Interview","Offer"].includes(d.status)},
-  {id:"due", label:"Follow-ups Due", predicate: isFollowUpDue, due:true}
+  {id:"ready", label:"Ready to Apply", predicate: d=>d.status==="Ready to Apply"},
+  {id:"applied", label:"Applied", predicate: d=>d.status==="Applied"},
+  {id:"inprogress", label:"In Progress", predicate: d=>d.status==="In Progress"},
+  {id:"rejected", label:"Rejected", predicate: d=>d.status==="Rejected"}
 ];
 let activeStat = null;
 
@@ -329,7 +326,7 @@ function renderStats(){
   const el = document.getElementById("stats");
   el.innerHTML = STAT_DEFS.map(s=>{
     const n = data.filter(s.predicate).length;
-    const cls = [s.due?"due":"", activeStat===s.id?"active":""].join(" ").trim();
+    const cls = activeStat===s.id ? "active" : "";
     return `<div class="stat ${cls}" data-stat="${s.id}" title="Click to filter the list"><div class="n">${n}</div><div class="l">${s.label}</div></div>`;
   }).join("");
   el.querySelectorAll("[data-stat]").forEach(elx=>{
@@ -338,8 +335,8 @@ function renderStats(){
       activeStat = (activeStat === id) ? null : id;
       document.getElementById("search").value = "";
       document.getElementById("filterStatus").value = "";
-      document.getElementById("filterTier").value = "";
       document.getElementById("filterChannel").value = "";
+      document.getElementById("filterSpec").value = "";
       renderAll();
     });
   });
@@ -352,11 +349,11 @@ function matchesFilters(item){
   }
   const q = document.getElementById("search").value.trim().toLowerCase();
   const fStatus = document.getElementById("filterStatus").value;
-  const fTier = document.getElementById("filterTier").value;
   const fChannel = document.getElementById("filterChannel").value;
+  const fSpec = document.getElementById("filterSpec").value;
   if(fStatus && item.status !== fStatus) return false;
-  if(fTier && item.tier !== fTier) return false;
   if(fChannel && item.channel !== fChannel) return false;
+  if(fSpec && !specList(item).includes(fSpec)) return false;
   if(q){
     const hay = [item.studio,item.discipline,item.whyFits,item.location,item.contact,item.responseLog].join(" ").toLowerCase();
     if(!hay.includes(q)) return false;
@@ -364,23 +361,41 @@ function matchesFilters(item){
   return true;
 }
 
+function specList(item){
+  return String(item.specialization||"").split(",").map(s=>s.trim()).filter(Boolean);
+}
+
+function parseTeamSize(str){
+  const s = String(str||"").toLowerCase();
+  const m = s.match(/\d+/);
+  if(m) return parseInt(m[0],10);
+  if(s.includes("large")) return s.includes("mid") ? 50 : 100;
+  if(s.includes("small")) return 4;
+  return null;
+}
+
 function sortItems(items){
   const by = document.getElementById("sortBy").value;
   const arr = [...items];
   if(by==="name") arr.sort((a,b)=>a.studio.localeCompare(b.studio));
-  else if(by==="status") arr.sort((a,b)=>STATUS_OPTIONS.indexOf(a.status)-STATUS_OPTIONS.indexOf(b.status));
   else if(by==="followup") arr.sort((a,b)=>(a.followUpDate||"9999").localeCompare(b.followUpDate||"9999"));
-  else arr.sort((a,b)=>(TIER_SORT_ORDER[a.tier]??9)-(TIER_SORT_ORDER[b.tier]??9) || a.studio.localeCompare(b.studio));
+  else if(by==="teamSize") arr.sort((a,b)=>{
+    const ta = parseTeamSize(a.teamSize), tb = parseTeamSize(b.teamSize);
+    if(ta===null && tb===null) return a.studio.localeCompare(b.studio);
+    if(ta===null) return 1;
+    if(tb===null) return -1;
+    return ta-tb || a.studio.localeCompare(b.studio);
+  });
+  else arr.sort((a,b)=>(STATUS_SORT_ORDER[a.status]??9)-(STATUS_SORT_ORDER[b.status]??9) || a.studio.localeCompare(b.studio));
   return arr;
 }
 
 function fieldRow(item, key, label, type){
   const val = item[key] ?? "";
-  if(type==="select-status" || type==="select-tier" || type==="select-channel"){
-    const opts = type==="select-status"?STATUS_OPTIONS:(type==="select-tier"?TIER_OPTIONS:CHANNEL_OPTIONS);
+  if(type==="select-channel"){
     return `<div class="field"><label>${label}</label>
       <select data-id="${item.id}" data-key="${key}">
-        ${opts.map(o=>`<option value="${o}" ${o===val?"selected":""}>${o}</option>`).join("")}
+        ${CHANNEL_OPTIONS.map(o=>`<option value="${o}" ${o===val?"selected":""}>${o}</option>`).join("")}
       </select></div>`;
   }
   if(type==="date"){
@@ -393,7 +408,34 @@ function fieldRow(item, key, label, type){
     const mailto = val && val.includes("@") ? `<a class="mailto" href="mailto:${val}">${val}</a>` : "";
     return `<div class="field"><label>${label}</label><input type="text" data-id="${item.id}" data-key="${key}" value="${escapeHtml(val)}">${mailto}</div>`;
   }
+  if(type==="link"){
+    const link = val ? `<a class="mailto" href="${escapeHtml(val)}" target="_blank" rel="noopener">${escapeHtml(val)}</a>` : "";
+    return `<div class="field"><label>${label}</label><input type="text" data-id="${item.id}" data-key="${key}" value="${escapeHtml(val)}">${link}</div>`;
+  }
   return `<div class="field"><label>${label}</label><input type="text" data-id="${item.id}" data-key="${key}" value="${escapeHtml(val)}"></div>`;
+}
+
+function specializationRow(item){
+  const tags = specList(item);
+  const chips = tags.length
+    ? tags.map(t=>`<span class="badge" style="color:var(--link);background:var(--surface-2);border:1px solid var(--border)">${escapeHtml(t)}</span>`).join(" ")
+    : `<span class="openings-note">None set</span>`;
+  return `<div class="field full"><label>Specialization</label>
+    <div class="openings-row">${chips}</div>
+    <input type="text" data-id="${item.id}" data-key="specialization" value="${escapeHtml(item.specialization||"")}" placeholder="Comma-separated: ${SPECIALIZATION_OPTIONS.join(', ')}">
+  </div>`;
+}
+
+function openingsRow(item){
+  const vars = OPENINGS_COLOR_VAR[item.openingsStatus] || ["--text-faint","--surface-2"];
+  const link = item.openingsUrl ? `<a href="${escapeHtml(item.openingsUrl)}" target="_blank" rel="noopener">${escapeHtml(item.openingsUrl)}</a>` : "";
+  return `<div class="field full"><label>Openings Check</label>
+    <div class="openings-row">
+      <span class="badge" style="color:var(${vars[0]});background:var(${vars[1]})">${escapeHtml(item.openingsStatus||"Not checked yet")}</span>
+      ${link}
+      <span class="openings-note">${escapeHtml(item.openingsNote||"")}${item.openingsChecked?` (checked ${escapeHtml(item.openingsChecked)})`:""}</span>
+    </div>
+  </div>`;
 }
 
 function escapeHtml(s){
@@ -406,34 +448,37 @@ function renderList(){
   document.getElementById("emptyMsg").style.display = items.length? "none":"block";
 
   listEl.innerHTML = items.map(item=>{
-    const tierVars = TIER_COLOR_VAR[item.tier] || ["--border","--surface-2"];
-    const statusVars = STATUS_COLOR_VAR[item.status] || ["--text-faint","--surface-2"];
+    const statusVars = STATUS_COLOR_VAR[item.status] || ["--border","--surface-2"];
     const open = openIds.has(item.id);
     const due = isFollowUpDue(item);
     return `
-    <div class="card ${open?'open':''}" style="--tier-color:var(${tierVars[0]})" data-card="${item.id}">
+    <div class="card ${open?'open':''}" style="--status-color:var(${statusVars[0]})" data-card="${item.id}">
       <div class="card-head" data-toggle="${item.id}">
         <span class="chev">&#9656;</span>
         <span class="name">${escapeHtml(item.studio)}</span>
-        <span class="badge" style="color:var(${statusVars[0]});background:var(${statusVars[1]})">${item.status}${due?" • Follow-up due":""}</span>
-        <span class="badge" style="color:var(${tierVars[0]});background:var(${tierVars[1]})">${item.tier}</span>
+        ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
+        ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
         <span class="meta">${escapeHtml(item.channel)}${item.location?" · "+escapeHtml(item.location):""}</span>
+        <select class="status-select" data-id="${item.id}" data-key="status" style="color:var(${statusVars[0]});background-color:var(${statusVars[1]})">
+          ${STATUS_OPTIONS.map(o=>`<option value="${o}" ${o===item.status?"selected":""}>${o}</option>`).join("")}
+        </select>
       </div>
       ${!open ? `<div class="why-preview">${escapeHtml(item.whyFits)}</div>` : ""}
       <div class="card-body">
         <div class="grid2">
-          ${fieldRow(item,"status","Status","select-status")}
-          ${fieldRow(item,"tier","Fit Tier","select-tier")}
           ${fieldRow(item,"channel","Channel","select-channel")}
           ${fieldRow(item,"contact","Contact","contact")}
           ${fieldRow(item,"location","Location","text")}
           ${fieldRow(item,"teamSize","Team Size","text")}
           ${fieldRow(item,"discipline","Discipline","text")}
+          ${fieldRow(item,"website","Website","link")}
           ${fieldRow(item,"portfolioPieces","Portfolio Pieces to Feature","text")}
           ${fieldRow(item,"dateApplied","Date Applied","date")}
           ${fieldRow(item,"followUpDate","Follow-up Date","date")}
+          ${specializationRow(item)}
           ${fieldRow(item,"whyFits","Why It Fits / Notes","textarea")}
           ${fieldRow(item,"responseLog","Response Log","textarea")}
+          ${openingsRow(item)}
         </div>
       </div>
     </div>`;
@@ -446,6 +491,9 @@ function renderList(){
       renderList();
     });
   });
+  listEl.querySelectorAll(".status-select").forEach(el=>{
+    el.addEventListener("click", (e)=> e.stopPropagation());
+  });
   listEl.querySelectorAll("[data-key]").forEach(el=>{
     const handler = ()=>{
       const id = Number(el.getAttribute("data-id"));
@@ -455,7 +503,7 @@ function renderList(){
       item[key] = el.value;
       saveData();
       renderStats();
-      if(["status","tier","channel","studio","followUpDate"].includes(key)){
+      if(["status","channel","studio","followUpDate","website","specialization"].includes(key)){
         renderList();
       }
     };
@@ -470,10 +518,10 @@ function renderAll(){ renderStats(); renderList(); }
 
 function wireToolbar(){
   populateSelect(document.getElementById("filterStatus"), STATUS_OPTIONS, "All statuses");
-  populateSelect(document.getElementById("filterTier"), TIER_OPTIONS, "All tiers");
   populateSelect(document.getElementById("filterChannel"), CHANNEL_OPTIONS, "All channels");
+  populateSelect(document.getElementById("filterSpec"), SPECIALIZATION_OPTIONS, "All specializations");
 
-  ["search","filterStatus","filterTier","filterChannel"].forEach(id=>{
+  ["search","filterStatus","filterChannel","filterSpec"].forEach(id=>{
     const clearAndRender = ()=>{ activeStat = null; renderStats(); renderList(); };
     document.getElementById(id).addEventListener("input", clearAndRender);
     document.getElementById(id).addEventListener("change", clearAndRender);
@@ -486,7 +534,7 @@ function wireToolbar(){
   });
 
   document.getElementById("exportCsv").addEventListener("click", ()=>{
-    const cols = ["studio","status","tier","channel","contact","location","teamSize","discipline","whyFits","portfolioPieces","dateApplied","followUpDate","responseLog"];
+    const cols = ["studio","status","channel","contact","location","teamSize","discipline","whyFits","portfolioPieces","dateApplied","followUpDate","responseLog","openingsStatus","openingsUrl","openingsNote","openingsChecked"];
     const csvEsc = v => `"${String(v??"").replace(/"/g,'""')}"`;
     const lines = [cols.join(",")];
     data.forEach(item=> lines.push(cols.map(c=>csvEsc(item[c])).join(",")));
