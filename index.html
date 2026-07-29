@@ -313,6 +313,7 @@
       </select>
       <div class="spacer"></div>
       <button class="btn" id="selectModeBtn">Select</button>
+      <button class="btn" id="recheckOpeningsBtn">Recheck openings</button>
       <button class="btn primary" id="addCompanyBtn">+ Add company</button>
       <button class="btn danger" id="resetBtn">Reset to starter list</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
@@ -534,6 +535,32 @@ async function insertStarterList(){
 
 let researchingIds = new Set();
 
+async function researchStudio(item, opts){
+  const silent = opts && opts.silent;
+  if(!item.website) return false;
+  researchingIds.add(item.id);
+  renderList();
+  let ok = false;
+  try{
+    const { error: fnError } = await sb.functions.invoke("research-company", {
+      body: { studioId: item.id, website: item.website }
+    });
+    if(fnError) throw fnError;
+    const { data: refreshed } = await sb.from("studios").select("*").eq("id", item.id).maybeSingle();
+    if(refreshed){
+      const idx = data.findIndex(d=>d.id===item.id);
+      if(idx>-1) data[idx] = rowToItem(refreshed);
+    }
+    if(!silent) showToast("Research complete for " + item.studio);
+    ok = true;
+  }catch(err){
+    if(!silent) showToast("Auto-research unavailable (function not deployed yet?) — you can fill details in manually.", true);
+  }finally{
+    researchingIds.delete(item.id);
+  }
+  return ok;
+}
+
 async function addCompany(studio, website){
   const row = { studio, website: website || null, status: "Interested" };
   const { data: inserted, error } = await sb.from("studios").insert([row]).select();
@@ -541,28 +568,21 @@ async function addCompany(studio, website){
   const newItem = rowToItem(inserted[0]);
   data.push(newItem);
   renderAll();
+  await researchStudio(newItem);
+  renderAll();
+}
 
-  if(website){
-    researchingIds.add(newItem.id);
-    renderList();
-    try{
-      const { data: fnResult, error: fnError } = await sb.functions.invoke("research-company", {
-        body: { studioId: newItem.id, website }
-      });
-      if(fnError) throw fnError;
-      const { data: refreshed } = await sb.from("studios").select("*").eq("id", newItem.id).maybeSingle();
-      if(refreshed){
-        const idx = data.findIndex(d=>d.id===newItem.id);
-        if(idx>-1) data[idx] = rowToItem(refreshed);
-      }
-      showToast("Research complete for " + studio);
-    }catch(err){
-      showToast("Auto-research unavailable (function not deployed yet?) — you can fill details in manually.", true);
-    }finally{
-      researchingIds.delete(newItem.id);
-      renderAll();
-    }
+async function recheckAllOpenings(){
+  const targets = data.filter(d=>d.website);
+  if(targets.length === 0){ showToast("No studios with a website to check.", true); return; }
+  showToast(`Rechecking ${targets.length} studio${targets.length===1?"":"s"}…`);
+  let successCount = 0;
+  for(const item of targets){
+    const ok = await researchStudio(item, {silent:true});
+    if(ok) successCount++;
+    renderAll();
   }
+  showToast(successCount ? `Rechecked ${successCount} of ${targets.length} studios` : "Recheck failed — is the function deployed?", successCount===0);
 }
 
 async function updateField(id, key, value){
@@ -898,6 +918,7 @@ function wireToolbar(){
     renderList();
   });
   document.getElementById("bulkApplyBtn").addEventListener("click", applyBulkStatus);
+  document.getElementById("recheckOpeningsBtn").addEventListener("click", recheckAllOpenings);
 
   ["search","filterStatus","filterChannel","filterSpec"].forEach(id=>{
     const clearAndRender = ()=>{ activeStat = null; renderStats(); renderList(); };
