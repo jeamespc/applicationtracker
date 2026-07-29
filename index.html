@@ -127,6 +127,8 @@
     color:var(--accent-contrast); background:var(--stProgress);
   }
   .open-badge.match-badge{background:var(--stApplied);}
+  .open-badge.researching-badge{background:var(--text-faint); animation:researchPulse 1.2s ease-in-out infinite;}
+  @keyframes researchPulse{ 0%,100%{opacity:1;} 50%{opacity:0.45;} }
   .site-link{color:var(--link); text-decoration:none; font-size:0.9rem; flex:0 0 auto; line-height:1;}
   .site-link:hover{text-decoration:underline;}
 
@@ -477,12 +479,37 @@ async function insertStarterList(){
   renderAll();
 }
 
+let researchingIds = new Set();
+
 async function addCompany(studio, website){
   const row = { studio, website: website || null, status: "Interested" };
   const { data: inserted, error } = await sb.from("studios").insert([row]).select();
   if(error){ showToast("Couldn't add: " + error.message, true); return; }
-  data.push(rowToItem(inserted[0]));
+  const newItem = rowToItem(inserted[0]);
+  data.push(newItem);
   renderAll();
+
+  if(website){
+    researchingIds.add(newItem.id);
+    renderList();
+    try{
+      const { data: fnResult, error: fnError } = await sb.functions.invoke("research-company", {
+        body: { studioId: newItem.id, website }
+      });
+      if(fnError) throw fnError;
+      const { data: refreshed } = await sb.from("studios").select("*").eq("id", newItem.id).maybeSingle();
+      if(refreshed){
+        const idx = data.findIndex(d=>d.id===newItem.id);
+        if(idx>-1) data[idx] = rowToItem(refreshed);
+      }
+      showToast("Research complete for " + studio);
+    }catch(err){
+      showToast("Auto-research unavailable (function not deployed yet?) — you can fill details in manually.", true);
+    }finally{
+      researchingIds.delete(newItem.id);
+      renderAll();
+    }
+  }
 }
 
 async function updateField(id, key, value){
@@ -711,6 +738,7 @@ function renderList(){
         <div class="card-head-main">
           <span class="name">${escapeHtml(item.studio)}</span>
           ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
+          ${researchingIds.has(item.id) ? `<span class="open-badge researching-badge">Researching&#8230;</span>` : ""}
           ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
           ${matchScore(item) > 0 ? `<span class="open-badge match-badge" title="Shares ${matchScore(item)} specialization(s) with your profile">&#9679; Match</span>` : ""}
           ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
