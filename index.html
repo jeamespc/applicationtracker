@@ -102,7 +102,11 @@
   .status-node{
     width:40px; height:40px; flex:0 0 40px;
     background:var(--status-color, var(--text-faint));
-    transition:filter .2s ease, transform .2s ease;
+    transform-origin:center;
+    transition:filter .2s ease, transform .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .card-head:hover .status-node{
+    transform:scale(1.14);
   }
   .status-node.lit{
     filter:drop-shadow(0 0 6px var(--stProgress)) brightness(1.25);
@@ -110,7 +114,6 @@
   }
   .status-node.lit:hover{
     filter:drop-shadow(0 0 10px var(--stProgress)) brightness(1.5);
-    transform:scale(1.06);
     animation-play-state:paused;
   }
   @keyframes litSquarePulse{
@@ -138,6 +141,7 @@
     color:var(--accent-contrast); background:var(--stProgress);
   }
   .open-badge.match-badge{background:var(--stApplied);}
+  .open-badge.open-call-badge{background:var(--stReady); color:var(--text);}
   .open-badge.researching-badge{background:var(--text-faint); animation:researchPulse 1.2s ease-in-out infinite;}
   @keyframes researchPulse{ 0%,100%{opacity:1;} 50%{opacity:0.45;} }
   .site-link{color:var(--link); text-decoration:none; font-size:0.9rem; flex:0 0 auto; line-height:1;}
@@ -356,7 +360,7 @@
       <div class="legend-row"><span class="swatch" style="background:var(--stRejected)"></span>Rejected — not pursuing. Onsitestudio is pre-filled here from the original doc, but its own note flags open slots and a toolkit match, so it's worth a second look before fully closing that door.</div>
       <p>The dropdown on each studio's row (right side, next to the channel/location) edits Status directly without opening the card.</p>
       <h4>Openings check</h4>
-      <p>Each studio's card (expand it to see) has an Openings Check row from an automated site check — whether their site currently shows an internship/junior listing, a link to what was checked, and the date. Treat "Open listing found" that isn't a dated posting as worth a speculative email, not a confirmed vacancy.</p>
+      <p>Each studio's card (expand it to see) has an Openings Check row from a site check — whether they currently have something open, a link to what was checked, and the date. <strong>Open listing</strong> means a specific, dated role was found; <strong>Open call</strong> means the studio has a standing invite to send speculative applications (e.g. a dedicated internship email) rather than a posted vacancy — worth an email either way, just set your expectations accordingly.</p>
       <h4>Suggested workflow per studio</h4>
       <ul>
         <li>Confirm the contact or posting is still live.</li>
@@ -413,6 +417,7 @@ const STATUS_SORT_ORDER = {"Interested":0, "Ready to Apply":1, "Applied":2, "In 
 
 const OPENINGS_COLOR_VAR = {
   "Open listing found": ["--stProgress","--stProgress-bg"],
+  "Open call": ["--stReady","--stReady-bg"],
   "Nothing posted": ["--text-faint","--surface-2"],
   "Couldn't determine": ["--stReady","--stReady-bg"]
 };
@@ -435,10 +440,10 @@ const SEED = [
   {studio:"Lascia la Scia", status:"Interested", channel:"Email", contact:"", location:"", teamSize:"5 founding women architects", discipline:"Architecture", website:"https://www.lascialascia.com/", specialization:"Architecture", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.lascialascia.com/about/", openingsNote:"No careers section found on site.", openingsChecked:"2026-07-29"},
   {studio:"Studio WOK", status:"Interested", channel:"Email", contact:"", location:"", teamSize:"3 partners", discipline:"Architecture (habitat-focused)", website:"https://www.studiowok.com/", specialization:"Architecture", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studiowok.com/contacts/", openingsNote:"General “work with us” call, requires Archicad, no internship mention.", openingsChecked:"2026-07-29"},
   {studio:"Stefano Boeri Architetti", status:"Interested", channel:"Email", contact:"hr@stefanoboeriarchitetti.net", location:"Milan/Shanghai/Tirana", teamSize:"Large", discipline:"Ecological urbanism", website:"https://www.stefanoboeriarchitetti.net/", specialization:"Architecture, Urban", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.stefanoboeriarchitetti.net/en/jobs-en/", openingsNote:"Current listings are senior/mid only; the 2022 junior posting link is dead.", openingsChecked:"2026-07-29"},
-  {studio:"Studio Klass", status:"Interested", channel:"Email", contact:"careers@studioklass.com", location:"", teamSize:"2 founders", discipline:"Product, interior, creative direction", website:"https://studioklass.com/", specialization:"Product, Interior", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://studioklass.com/studio", openingsNote:"Standing invite to apply for internships via careers@ — not a dated posting.", openingsChecked:"2026-07-29"},
+  {studio:"Studio Klass", status:"Interested", channel:"Email", contact:"careers@studioklass.com", location:"", teamSize:"2 founders", discipline:"Product, interior, creative direction", website:"https://studioklass.com/", specialization:"Product, Interior", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open call", openingsUrl:"https://studioklass.com/studio", openingsNote:"Standing invite to apply for internships via careers@ — not a dated posting.", openingsChecked:"2026-07-29"},
   {studio:"CrippaConcept", status:"Interested", channel:"Website", contact:"", location:"", teamSize:"", discipline:"Mobile-home / glamping manufacturer", website:"https://www.crippaconcept.com/", specialization:"Manufacturing", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Couldn't determine", openingsUrl:"https://www.crippaconcept.com/en/join-us/", openingsNote:"Site returned server errors on every automated check — try in a regular browser.", openingsChecked:"2026-07-29"},
-  {studio:"Studio Urquiola", status:"Interested", channel:"Email", contact:"recruiting@patriciaurquiola.com", location:"", teamSize:"~40", discipline:"Architecture / interior / product", website:"https://patriciaurquiola.com/", specialization:"Architecture, Interior, Product", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://patriciaurquiola.com/contact", openingsNote:"Standing invite to apply for internships via recruiting@ — not a dated posting.", openingsChecked:"2026-07-29"},
-  {studio:"LLABB", status:"Interested", channel:"Email", contact:"internship@llabb.eu", location:"Genova (not Milan)", teamSize:"", discipline:"Architecture (craft-rooted)", website:"https://llabb.eu/", specialization:"Architecture", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://llabb.eu/contact", openingsNote:"Dedicated internship@ address specifically for internship requests.", openingsChecked:"2026-07-29"},
+  {studio:"Studio Urquiola", status:"Interested", channel:"Email", contact:"recruiting@patriciaurquiola.com", location:"", teamSize:"~40", discipline:"Architecture / interior / product", website:"https://patriciaurquiola.com/", specialization:"Architecture, Interior, Product", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open call", openingsUrl:"https://patriciaurquiola.com/contact", openingsNote:"Standing invite to apply for internships via recruiting@ — not a dated posting.", openingsChecked:"2026-07-29"},
+  {studio:"LLABB", status:"Interested", channel:"Email", contact:"internship@llabb.eu", location:"Genova (not Milan)", teamSize:"", discipline:"Architecture (craft-rooted)", website:"https://llabb.eu/", specialization:"Architecture", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open call", openingsUrl:"https://llabb.eu/contact", openingsNote:"Dedicated internship@ address specifically for internship requests.", openingsChecked:"2026-07-29"},
   {studio:"Onsitestudio", status:"Rejected", channel:"Email", contact:"jobs@onsitestudio.it", location:"", teamSize:"~18", discipline:"Architecture", website:"https://www.onsitestudio.it/", specialization:"Architecture", whyFits:"", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.onsitestudio.it/", openingsNote:"No careers/jobs links found anywhere in navigation.", openingsChecked:"2026-07-29"}
 ];
 
@@ -663,6 +668,10 @@ function specList(item){
   return String(item.specialization||"").split(",").map(s=>s.trim()).filter(Boolean);
 }
 
+function hasActiveOpening(item){
+  return item.openingsStatus==="Open listing found" || item.openingsStatus==="Open call";
+}
+
 function locSpecLine(item){
   const loc = String(item.location||"").trim().toUpperCase();
   const specs = specList(item).map(s=>s.toUpperCase()).join(" + ");
@@ -694,8 +703,8 @@ function sortItems(items){
   else if(by==="followup") arr.sort((a,b)=>(a.followUpDate||"9999").localeCompare(b.followUpDate||"9999"));
   else if(by==="match") arr.sort((a,b)=> matchScore(b)-matchScore(a) || a.studio.localeCompare(b.studio));
   else if(by==="opening") arr.sort((a,b)=>{
-    const oa = a.openingsStatus==="Open listing found" ? 0 : 1;
-    const ob = b.openingsStatus==="Open listing found" ? 0 : 1;
+    const oa = hasActiveOpening(a) ? 0 : 1;
+    const ob = hasActiveOpening(b) ? 0 : 1;
     return oa-ob || a.studio.localeCompare(b.studio);
   });
   else if(by==="teamSize") arr.sort((a,b)=>{
@@ -786,7 +795,7 @@ function renderList(){
     const open = openIds.has(item.id);
     const due = isFollowUpDue(item);
     const selected = selectedIds.has(item.id);
-    const hasOpening = item.openingsStatus==="Open listing found";
+    const hasOpening = hasActiveOpening(item);
     const lit = hasOpening || item.status==="In Progress";
     const litReason = hasOpening && item.status==="In Progress"
       ? " — has an active opening, and you're in progress"
@@ -802,6 +811,7 @@ function renderList(){
             ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
             ${researchingIds.has(item.id) ? `<span class="open-badge researching-badge">Researching&#8230;</span>` : ""}
             ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
+            ${item.openingsStatus==="Open call" ? `<span class="open-badge open-call-badge" title="${escapeHtml(item.openingsNote||"Open call")}">&#9679; Open call</span>` : ""}
             ${matchScore(item) > 0 ? `<span class="open-badge match-badge" title="Shares ${matchScore(item)} specialization(s) with your profile">&#9679; Match</span>` : ""}
             ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
           </div>
