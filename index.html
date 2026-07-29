@@ -9,6 +9,7 @@
     --bg:#f5f4f1; --surface:#ffffff; --surface-2:#fafaf8; --border:#e2e0da;
     --text:#1c1b19; --text-dim:#6b6862; --text-faint:#9b9790;
     --accent:#1c1b19; --accent-contrast:#ffffff;
+    --stInterested:#7a5fb0; --stInterested-bg:#ece4f7;
     --stReady:#e7c200; --stReady-bg:#fdf6d8;
     --stApplied:#0d7d72; --stApplied-bg:#d7f1ec;
     --stProgress:#3f8a52; --stProgress-bg:#dcefe0;
@@ -22,6 +23,7 @@
       --bg:#171614; --surface:#211f1c; --surface-2:#26241f; --border:#3a3733;
       --text:#f0eee9; --text-dim:#b7b3ab; --text-faint:#847f76;
       --accent:#f0eee9; --accent-contrast:#171614;
+      --stInterested:#b399e0; --stInterested-bg:#2e2540;
       --stReady:#e7c200; --stReady-bg:#3a341a;
       --stApplied:#4fd1c0; --stApplied-bg:#163330;
       --stProgress:#5cb373; --stProgress-bg:#20342a;
@@ -34,6 +36,7 @@
     --bg:#171614; --surface:#211f1c; --surface-2:#26241f; --border:#3a3733;
     --text:#f0eee9; --text-dim:#b7b3ab; --text-faint:#847f76;
     --accent:#f0eee9; --accent-contrast:#171614;
+    --stInterested:#b399e0; --stInterested-bg:#2e2540;
     --stReady:#e7c200; --stReady-bg:#3a341a;
     --stApplied:#4fd1c0; --stApplied-bg:#163330;
     --stProgress:#5cb373; --stProgress-bg:#20342a;
@@ -96,6 +99,11 @@
   .card-head .meta{color:var(--text-dim); font-size:0.78rem; display:none; white-space:nowrap;}
   @media(min-width:640px){ .card-head .meta{display:block;} }
   .due-dot{width:8px; height:8px; border-radius:50%; background:var(--stRejected); flex:0 0 auto;}
+  .open-badge{
+    display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px;
+    font-size:0.68rem; font-weight:600; white-space:nowrap; flex:0 0 auto;
+    color:var(--stProgress); background:var(--stProgress-bg);
+  }
   .site-link{color:var(--link); text-decoration:none; font-size:0.85rem; flex:0 0 auto; line-height:1;}
   .site-link:hover{text-decoration:underline;}
 
@@ -200,7 +208,8 @@
         <button class="btn" id="exportCsv">Export CSV</button>
       </div>
       <h4>Status</h4>
-      <div class="legend-row"><span class="swatch" style="background:var(--stReady)"></span>Ready to Apply — haven't sent anything yet.</div>
+      <div class="legend-row"><span class="swatch" style="background:var(--stInterested)"></span>Interested — noted, not vetted/prioritized yet.</div>
+      <div class="legend-row"><span class="swatch" style="background:var(--stReady)"></span>Ready to Apply — vetted, haven't sent anything yet.</div>
       <div class="legend-row"><span class="swatch" style="background:var(--stApplied)"></span>Applied — sent, waiting to hear back.</div>
       <div class="legend-row"><span class="swatch" style="background:var(--stProgress)"></span>In Progress — they've responded, you're past the first stage. Good sign.</div>
       <div class="legend-row"><span class="swatch" style="background:var(--stRejected)"></span>Rejected — not pursuing. Onsitestudio is pre-filled here from the original doc, but its own note flags open slots and a toolkit match, so it's worth a second look before fully closing that door.</div>
@@ -226,17 +235,18 @@
 <script>
 const STORAGE_KEY = "jeame_application_tracker_v1";
 
-const STATUS_OPTIONS = ["Ready to Apply","Applied","In Progress","Rejected"];
+const STATUS_OPTIONS = ["Interested","Ready to Apply","Applied","In Progress","Rejected"];
 const CHANNEL_OPTIONS = ["Email","Website"];
 const SPECIALIZATION_OPTIONS = ["Interior","Exhibit","Architecture","Urban","Product","Manufacturing"];
 
 const STATUS_COLOR_VAR = {
+  "Interested": ["--stInterested","--stInterested-bg"],
   "Ready to Apply": ["--stReady","--stReady-bg"],
   "Applied": ["--stApplied","--stApplied-bg"],
   "In Progress": ["--stProgress","--stProgress-bg"],
   "Rejected": ["--stRejected","--stRejected-bg"]
 };
-const STATUS_SORT_ORDER = {"Ready to Apply":0, "Applied":1, "In Progress":2, "Rejected":3};
+const STATUS_SORT_ORDER = {"Interested":0, "Ready to Apply":1, "Applied":2, "In Progress":3, "Rejected":4};
 
 const OPENINGS_COLOR_VAR = {
   "Open listing found": ["--stProgress","--stProgress-bg"],
@@ -315,6 +325,7 @@ function populateSelect(sel, options, allLabel){
 
 const STAT_DEFS = [
   {id:"total", label:"Total Studios", predicate: ()=>true},
+  {id:"interested", label:"Interested", predicate: d=>d.status==="Interested"},
   {id:"ready", label:"Ready to Apply", predicate: d=>d.status==="Ready to Apply"},
   {id:"applied", label:"Applied", predicate: d=>d.status==="Applied"},
   {id:"inprogress", label:"In Progress", predicate: d=>d.status==="In Progress"},
@@ -457,6 +468,7 @@ function renderList(){
         <span class="chev">&#9656;</span>
         <span class="name">${escapeHtml(item.studio)}</span>
         ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
+        ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
         ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
         <span class="meta">${escapeHtml(item.channel)}${item.location?" · "+escapeHtml(item.location):""}</span>
         <select class="status-select" data-id="${item.id}" data-key="status" style="color:var(${statusVars[0]});background-color:var(${statusVars[1]})">
