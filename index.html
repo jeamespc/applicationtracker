@@ -94,10 +94,25 @@
   .card{
     background:var(--surface); border:1px solid var(--border);
   }
+  .card.selected{ outline:2px solid var(--accent); outline-offset:-2px; }
+  .select-checkbox{ margin-left:14px; flex:0 0 auto; width:16px; height:16px; cursor:pointer; accent-color:var(--accent); }
   .card-head{
-    display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer;
+    display:flex; align-items:stretch; cursor:pointer;
   }
-  .status-node{width:13px; height:13px; background:var(--status-color, var(--text-faint)); flex:0 0 auto;}
+  .status-node{
+    width:44px; flex:0 0 44px; background:var(--status-color, var(--text-faint));
+    transition:filter .2s ease, transform .2s ease;
+  }
+  .status-node.has-opening:hover{
+    filter:drop-shadow(0 0 8px var(--stProgress)) brightness(1.4);
+    transform:scale(1.06);
+  }
+  @media(max-width:560px){ .status-node{width:32px; flex-basis:32px;} }
+  .card-head-main{
+    flex:1 1 auto; min-width:0; display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+    padding:12px 14px;
+  }
+  .card-head-right{display:flex; align-items:center; gap:8px; padding:12px 14px 12px 0; flex:0 0 auto;}
   .card-head .name{
     font-family:'Arial Black','Arial',sans-serif; font-weight:900;
     font-size:0.88rem; letter-spacing:-0.01em; text-transform:uppercase;
@@ -143,6 +158,7 @@
   }
   .field textarea{resize:vertical; min-height:44px; line-height:1.4;}
   .field a.mailto{font-size:0.8rem; color:var(--link); text-decoration:none; margin-top:2px;}
+  .ro-value{font-size:0.85rem; padding:7px 0; color:var(--text); word-break:break-word;}
   .field a.mailto:hover{text-decoration:underline;}
 
   .openings-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:0.8rem;}
@@ -284,9 +300,17 @@
         <option value="match">Sort: Best match (my profile)</option>
       </select>
       <div class="spacer"></div>
+      <button class="btn" id="selectModeBtn">Select</button>
       <button class="btn primary" id="addCompanyBtn">+ Add company</button>
       <button class="btn danger" id="resetBtn">Reset to starter list</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+
+    <div class="toolbar" id="bulkBar" style="display:none;">
+      <span id="bulkCount" style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;"></span>
+      <select id="bulkStatus"></select>
+      <button class="btn primary" id="bulkApplyBtn">Apply status</button>
+      <button class="btn" id="bulkClearBtn">Clear selection</button>
     </div>
 
     <div class="toolbar" id="addCompanyForm">
@@ -386,33 +410,57 @@ const OPENINGS_COLOR_VAR = {
 };
 
 const SEED = [
-  {studio:"Matteo Thun & Partners", status:"Ready to Apply", channel:"Website", contact:"", location:"Milan + Munich", teamSize:"~70", discipline:"Architecture, interior, product, exhibition design", website:"https://www.matteothun.com/", specialization:"Architecture, Interior, Product, Exhibit", whyFits:"Major pedigree (Thun co-founded Memphis Group with Sottsass). Live Junior Interior Designer posting right now, plus an actual connection through CrippaConcept.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://careers.matteothun.com/", openingsNote:"Only Senior Architect roles + open application listed, no junior/intern.", openingsChecked:"2026-07-29"},
-  {studio:"Formafantasma", status:"Ready to Apply", channel:"Email", contact:"work@formafantasma.com", location:"Milan/Rotterdam", teamSize:"", discipline:"Design research (material & ecological)", website:"https://formafantasma.com/", specialization:"Product, Exhibit", whyFits:"Research studio (Trimarchi & Farresin); treats design as material and ecological research rather than styling — form follows the research, not the other way around. Your strongest match.", portfolioPieces:"DEMY, Palazzo Bianco", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://formafantasma.com/studio", openingsNote:"Paid 6-month internship listed “from Feb 2026” — that start date may already be stale, confirm.", openingsChecked:"2026-07-29"},
-  {studio:"Atelierzero", status:"Ready to Apply", channel:"Email", contact:"info@atelierzero.it", location:"", teamSize:"3 founders", discipline:"Residential / retail / product", website:"https://www.atelierzero.it/", specialization:"Interior, Product", whyFits:"Built on “emotional design with conceptual clarity.” Language very close to your own design philosophy; also a registered internship host.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.atelierzero.it/", openingsNote:"No careers section on site; contact email only.", openingsChecked:"2026-07-29"},
-  {studio:"Atelier Biagetti", status:"Ready to Apply", channel:"Email", contact:"info@atelierbiagetti.com", location:"Milan (Navigli)", teamSize:"2 (duo)", discipline:"Furniture / art-object design", website:"https://atelierbiagetti.com/", specialization:"Product", whyFits:"Treat every project like a movie: surreal, theatrical, art-object furniture. Closest Milan equivalent to Supaform's small, authorial, provocative spirit.", portfolioPieces:"Supaform", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://atelierbiagetti.com/", openingsNote:"Generic “Join the team” upload form, no specific listing.", openingsChecked:"2026-07-29"},
-  {studio:"Migliore+Servetto", status:"Ready to Apply", channel:"Email", contact:"job@miglioreservetto.com", location:"", teamSize:"", discipline:"Scenography / exhibition design", website:"https://architettimiglioreservetto.it/", specialization:"Exhibit", whyFits:"Trained under Castiglioni; museums and “narrative spaces” built around the visitor's journey. Probably your single best match — designing how people move through and encounter a space is their literal discipline.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://architettimiglioreservetto.it/", openingsNote:"No careers page; job@ email only, no listing.", openingsChecked:"2026-07-29"},
-  {studio:"Park Associati", status:"Ready to Apply", channel:"Website", contact:"", location:"", teamSize:"Mid-large", discipline:"Architecture & interior (corporate / retail)", website:"https://parkassociati.com/", specialization:"Architecture, Interior", whyFits:"Corporate HQ and retail-scale architecture and interior design. Less personal-narrative fit, but size means real hiring turnover.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://parkassociati.com/career", openingsNote:"Junior 3D Visualizer role currently open.", openingsChecked:"2026-07-29"},
-  {studio:"Vudafieri-Saverino Partners", status:"Ready to Apply", channel:"Email", contact:"info@vudafierisaverino.it", location:"", teamSize:"", discipline:"Retail, hospitality, restaurants", website:"https://www.vudafierisaverino.it/", specialization:"Interior", whyFits:"Storytelling explicitly named as their method (ex-Sottsass pedigree). Their framing of “Concept Design and Storytelling Strategy” mirrors how you talk about your own process.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.vudafierisaverino.it/", openingsNote:"No careers section on homepage, contacts, or studio pages.", openingsChecked:"2026-07-29"},
-  {studio:"Locatelli Partners", status:"Ready to Apply", channel:"Email", contact:"design@locatellipartners.com", location:"Milan + NY", teamSize:"~60", discipline:"Architecture & interiors", website:"https://locatellipartners.com/", specialization:"Architecture, Interior", whyFits:"Material- and tech-research-driven. Prominent and well-resourced — a solid junior-role bet.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://locatellipartners.com/about/", openingsNote:"No careers section found on site.", openingsChecked:"2026-07-29"},
-  {studio:"Studiopepe", status:"Ready to Apply", channel:"Email", contact:"apply@studiopepe.info", location:"", teamSize:"", discipline:"Interiors (retail / hospitality / residential)", website:"https://www.studiopepe.info/", specialization:"Interior", whyFits:"Eclectic, art-directed, materially rich interiors. Probably your closest single aesthetic match overall.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studiopepe.info/", openingsNote:"No careers/jobs section found on site.", openingsChecked:"2026-07-29"},
-  {studio:"Dimorestudio", status:"Ready to Apply", channel:"Email", contact:"careers@dimorestudio.eu", location:"", teamSize:"40+", discipline:"Interiors (fashion / hospitality)", website:"https://www.dimorestudio.eu/", specialization:"Interior", whyFits:"Moody, atmospheric, “total work of art” interiors for major fashion and hospitality clients. Strong atmospheric match; has an active careers channel worth trying, though no live posting right now.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.dimorestudio.eu/careers/", openingsNote:"Careers page explicitly states no positions available right now.", openingsChecked:"2026-07-29"},
-  {studio:"Cristina Celestino", status:"Ready to Apply", channel:"Email", contact:"info@cristinacelestino.com", location:"", teamSize:"Small (personal-name studio)", discipline:"Residential & product design", website:"https://cristinacelestino.com/", specialization:"Interior, Product", whyFits:"Maximalist, color- and pattern-driven residential and product design. Closest to an authorial, small-scale practice like Supaform.", portfolioPieces:"Supaform", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://cristinacelestino.com/studio", openingsNote:"Generic “always looking for talent” call, not internship-specific.", openingsChecked:"2026-07-29"},
-  {studio:"Calvi Brambilla", status:"Ready to Apply", channel:"Email", contact:"studio@calvibrambilla.it", location:"", teamSize:"Small team", discipline:"Interiors, exhibitions, product", website:"https://www.calvibrambilla.it/", specialization:"Interior, Exhibit, Product", whyFits:"“Subtle irony”; teaching ties to Politecnico. Real exhibition-design chops at boutique scale — a good complement to Migliore+Servetto.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Couldn't determine", openingsUrl:"https://www.calvibrambilla.it/", openingsNote:"Site returned server errors on every automated check — try in a regular browser.", openingsChecked:"2026-07-29"},
-  {studio:"Atomaa", status:"Ready to Apply", channel:"Email", contact:"jobs@atomaa.eu", location:"Milan + Edinburgh", teamSize:"3 partners", discipline:"Residential / micro-living", website:"https://atomaa.eu/", specialization:"Interior", whyFits:"Hands-on material detailing. Boutique scale, close to your interior/spatial focus.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://atomaa.eu/", openingsNote:"No careers/jobs section found on site.", openingsChecked:"2026-07-29"},
-  {studio:"Studio MI·LO", status:"Ready to Apply", channel:"Email", contact:"", location:"Milan + London", teamSize:"Small boutique", discipline:"Interiors", website:"https://www.studio-milo.com/", specialization:"Interior", whyFits:"Evocative interiors. Good mentorship scale, though the least-researched name on this list — confirm details before applying.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studio-milo.com/about-us/", openingsNote:"No careers section found; contact emails only.", openingsChecked:"2026-07-29"},
-  {studio:"Lascia la Scia", status:"Ready to Apply", channel:"Email", contact:"", location:"", teamSize:"5 founding women architects", discipline:"Architecture", website:"https://www.lascialascia.com/", specialization:"Architecture", whyFits:"Runs its own coworking lab; warm, collaborative culture. Craft-forward, community-minded — feels like a place that mentors closely.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.lascialascia.com/about/", openingsNote:"No careers section found on site.", openingsChecked:"2026-07-29"},
-  {studio:"Studio WOK", status:"Ready to Apply", channel:"Email", contact:"", location:"", teamSize:"3 partners", discipline:"Architecture (habitat-focused)", website:"https://www.studiowok.com/", specialization:"Architecture", whyFits:"Narrative, habitat-focused architecture. Real, demonstrated investment in training junior designers — they head SPD's Interior Design Master.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studiowok.com/contacts/", openingsNote:"General “work with us” call, requires Archicad, no internship mention.", openingsChecked:"2026-07-29"},
-  {studio:"Stefano Boeri Architetti", status:"Ready to Apply", channel:"Email", contact:"hr@stefanoboeriarchitetti.net", location:"Milan/Shanghai/Tirana", teamSize:"Large", discipline:"Ecological urbanism", website:"https://www.stefanoboeriarchitetti.net/", specialization:"Architecture, Urban", whyFits:"Large-scale ecological urbanism (Bosco Verticale). Fits your urban/spatial side better than interiors; has a jobs page and open channel.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.stefanoboeriarchitetti.net/en/jobs-en/", openingsNote:"Current listings are senior/mid only; the 2022 junior posting link is dead.", openingsChecked:"2026-07-29"},
-  {studio:"Studio Klass", status:"Ready to Apply", channel:"Email", contact:"careers@studioklass.com", location:"", teamSize:"2 founders", discipline:"Product, interior, creative direction", website:"https://studioklass.com/", specialization:"Product, Interior", whyFits:"Teaching ties to IED. Smallest team here, with a direct pipeline from design education.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://studioklass.com/studio", openingsNote:"Standing invite to apply for internships via careers@ — not a dated posting.", openingsChecked:"2026-07-29"},
-  {studio:"CrippaConcept", status:"Ready to Apply", channel:"Website", contact:"", location:"", teamSize:"", discipline:"Mobile-home / glamping manufacturer", website:"https://www.crippaconcept.com/", specialization:"Manufacturing", whyFits:"Not a design studio. Your existing warm connection via Prof. Trabattoni, thematically identical to Mechanisma, and the link into Matteo Thun & Partners.", portfolioPieces:"Mechanisma", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Couldn't determine", openingsUrl:"https://www.crippaconcept.com/en/join-us/", openingsNote:"Site returned server errors on every automated check — try in a regular browser.", openingsChecked:"2026-07-29"},
-  {studio:"Studio Urquiola", status:"Ready to Apply", channel:"Email", contact:"recruiting@patriciaurquiola.com", location:"", teamSize:"~40", discipline:"Architecture / interior / product", website:"https://patriciaurquiola.com/", specialization:"Architecture, Interior, Product", whyFits:"Globally prominent (Patricia Urquiola); expressive, eclectic work. Big CV value; also worth trying for an actual junior role given its size.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://patriciaurquiola.com/contact", openingsNote:"Standing invite to apply for internships via recruiting@ — not a dated posting.", openingsChecked:"2026-07-29"},
-  {studio:"LLABB", status:"Ready to Apply", channel:"Email", contact:"internship@llabb.eu", location:"Genova (not Milan)", teamSize:"", discipline:"Architecture (craft-rooted)", website:"https://llabb.eu/", specialization:"Architecture", whyFits:"Began as a carpentry workshop. Confirmed to host interns — worth the commute if hands-on material culture matters more than location.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://llabb.eu/contact", openingsNote:"Dedicated internship@ address specifically for internship requests.", openingsChecked:"2026-07-29"},
+  {studio:"Matteo Thun & Partners", status:"Interested", channel:"Website", contact:"", location:"Milan + Munich", teamSize:"~70", discipline:"Architecture, interior, product, exhibition design", website:"https://www.matteothun.com/", specialization:"Architecture, Interior, Product, Exhibit", whyFits:"Major pedigree (Thun co-founded Memphis Group with Sottsass). Live Junior Interior Designer posting right now, plus an actual connection through CrippaConcept.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://careers.matteothun.com/", openingsNote:"Only Senior Architect roles + open application listed, no junior/intern.", openingsChecked:"2026-07-29"},
+  {studio:"Formafantasma", status:"Interested", channel:"Email", contact:"work@formafantasma.com", location:"Milan/Rotterdam", teamSize:"", discipline:"Design research (material & ecological)", website:"https://formafantasma.com/", specialization:"Product, Exhibit", whyFits:"Research studio (Trimarchi & Farresin); treats design as material and ecological research rather than styling — form follows the research, not the other way around. Your strongest match.", portfolioPieces:"DEMY, Palazzo Bianco", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://formafantasma.com/studio", openingsNote:"Paid 6-month internship listed “from Feb 2026” — that start date may already be stale, confirm.", openingsChecked:"2026-07-29"},
+  {studio:"Atelierzero", status:"Interested", channel:"Email", contact:"info@atelierzero.it", location:"", teamSize:"3 founders", discipline:"Residential / retail / product", website:"https://www.atelierzero.it/", specialization:"Interior, Product", whyFits:"Built on “emotional design with conceptual clarity.” Language very close to your own design philosophy; also a registered internship host.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.atelierzero.it/", openingsNote:"No careers section on site; contact email only.", openingsChecked:"2026-07-29"},
+  {studio:"Atelier Biagetti", status:"Interested", channel:"Email", contact:"info@atelierbiagetti.com", location:"Milan (Navigli)", teamSize:"2 (duo)", discipline:"Furniture / art-object design", website:"https://atelierbiagetti.com/", specialization:"Product", whyFits:"Treat every project like a movie: surreal, theatrical, art-object furniture. Closest Milan equivalent to Supaform's small, authorial, provocative spirit.", portfolioPieces:"Supaform", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://atelierbiagetti.com/", openingsNote:"Generic “Join the team” upload form, no specific listing.", openingsChecked:"2026-07-29"},
+  {studio:"Migliore+Servetto", status:"Interested", channel:"Email", contact:"job@miglioreservetto.com", location:"", teamSize:"", discipline:"Scenography / exhibition design", website:"https://architettimiglioreservetto.it/", specialization:"Exhibit", whyFits:"Trained under Castiglioni; museums and “narrative spaces” built around the visitor's journey. Probably your single best match — designing how people move through and encounter a space is their literal discipline.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://architettimiglioreservetto.it/", openingsNote:"No careers page; job@ email only, no listing.", openingsChecked:"2026-07-29"},
+  {studio:"Park Associati", status:"Interested", channel:"Website", contact:"", location:"", teamSize:"Mid-large", discipline:"Architecture & interior (corporate / retail)", website:"https://parkassociati.com/", specialization:"Architecture, Interior", whyFits:"Corporate HQ and retail-scale architecture and interior design. Less personal-narrative fit, but size means real hiring turnover.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://parkassociati.com/career", openingsNote:"Junior 3D Visualizer role currently open.", openingsChecked:"2026-07-29"},
+  {studio:"Vudafieri-Saverino Partners", status:"Interested", channel:"Email", contact:"info@vudafierisaverino.it", location:"", teamSize:"", discipline:"Retail, hospitality, restaurants", website:"https://www.vudafierisaverino.it/", specialization:"Interior", whyFits:"Storytelling explicitly named as their method (ex-Sottsass pedigree). Their framing of “Concept Design and Storytelling Strategy” mirrors how you talk about your own process.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.vudafierisaverino.it/", openingsNote:"No careers section on homepage, contacts, or studio pages.", openingsChecked:"2026-07-29"},
+  {studio:"Locatelli Partners", status:"Interested", channel:"Email", contact:"design@locatellipartners.com", location:"Milan + NY", teamSize:"~60", discipline:"Architecture & interiors", website:"https://locatellipartners.com/", specialization:"Architecture, Interior", whyFits:"Material- and tech-research-driven. Prominent and well-resourced — a solid junior-role bet.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://locatellipartners.com/about/", openingsNote:"No careers section found on site.", openingsChecked:"2026-07-29"},
+  {studio:"Studiopepe", status:"Interested", channel:"Email", contact:"apply@studiopepe.info", location:"", teamSize:"", discipline:"Interiors (retail / hospitality / residential)", website:"https://www.studiopepe.info/", specialization:"Interior", whyFits:"Eclectic, art-directed, materially rich interiors. Probably your closest single aesthetic match overall.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studiopepe.info/", openingsNote:"No careers/jobs section found on site.", openingsChecked:"2026-07-29"},
+  {studio:"Dimorestudio", status:"Interested", channel:"Email", contact:"careers@dimorestudio.eu", location:"", teamSize:"40+", discipline:"Interiors (fashion / hospitality)", website:"https://www.dimorestudio.eu/", specialization:"Interior", whyFits:"Moody, atmospheric, “total work of art” interiors for major fashion and hospitality clients. Strong atmospheric match; has an active careers channel worth trying, though no live posting right now.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.dimorestudio.eu/careers/", openingsNote:"Careers page explicitly states no positions available right now.", openingsChecked:"2026-07-29"},
+  {studio:"Cristina Celestino", status:"Interested", channel:"Email", contact:"info@cristinacelestino.com", location:"", teamSize:"Small (personal-name studio)", discipline:"Residential & product design", website:"https://cristinacelestino.com/", specialization:"Interior, Product", whyFits:"Maximalist, color- and pattern-driven residential and product design. Closest to an authorial, small-scale practice like Supaform.", portfolioPieces:"Supaform", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://cristinacelestino.com/studio", openingsNote:"Generic “always looking for talent” call, not internship-specific.", openingsChecked:"2026-07-29"},
+  {studio:"Calvi Brambilla", status:"Interested", channel:"Email", contact:"studio@calvibrambilla.it", location:"", teamSize:"Small team", discipline:"Interiors, exhibitions, product", website:"https://www.calvibrambilla.it/", specialization:"Interior, Exhibit, Product", whyFits:"“Subtle irony”; teaching ties to Politecnico. Real exhibition-design chops at boutique scale — a good complement to Migliore+Servetto.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Couldn't determine", openingsUrl:"https://www.calvibrambilla.it/", openingsNote:"Site returned server errors on every automated check — try in a regular browser.", openingsChecked:"2026-07-29"},
+  {studio:"Atomaa", status:"Interested", channel:"Email", contact:"jobs@atomaa.eu", location:"Milan + Edinburgh", teamSize:"3 partners", discipline:"Residential / micro-living", website:"https://atomaa.eu/", specialization:"Interior", whyFits:"Hands-on material detailing. Boutique scale, close to your interior/spatial focus.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://atomaa.eu/", openingsNote:"No careers/jobs section found on site.", openingsChecked:"2026-07-29"},
+  {studio:"Studio MI·LO", status:"Interested", channel:"Email", contact:"", location:"Milan + London", teamSize:"Small boutique", discipline:"Interiors", website:"https://www.studio-milo.com/", specialization:"Interior", whyFits:"Evocative interiors. Good mentorship scale, though the least-researched name on this list — confirm details before applying.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studio-milo.com/about-us/", openingsNote:"No careers section found; contact emails only.", openingsChecked:"2026-07-29"},
+  {studio:"Lascia la Scia", status:"Interested", channel:"Email", contact:"", location:"", teamSize:"5 founding women architects", discipline:"Architecture", website:"https://www.lascialascia.com/", specialization:"Architecture", whyFits:"Runs its own coworking lab; warm, collaborative culture. Craft-forward, community-minded — feels like a place that mentors closely.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.lascialascia.com/about/", openingsNote:"No careers section found on site.", openingsChecked:"2026-07-29"},
+  {studio:"Studio WOK", status:"Interested", channel:"Email", contact:"", location:"", teamSize:"3 partners", discipline:"Architecture (habitat-focused)", website:"https://www.studiowok.com/", specialization:"Architecture", whyFits:"Narrative, habitat-focused architecture. Real, demonstrated investment in training junior designers — they head SPD's Interior Design Master.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.studiowok.com/contacts/", openingsNote:"General “work with us” call, requires Archicad, no internship mention.", openingsChecked:"2026-07-29"},
+  {studio:"Stefano Boeri Architetti", status:"Interested", channel:"Email", contact:"hr@stefanoboeriarchitetti.net", location:"Milan/Shanghai/Tirana", teamSize:"Large", discipline:"Ecological urbanism", website:"https://www.stefanoboeriarchitetti.net/", specialization:"Architecture, Urban", whyFits:"Large-scale ecological urbanism (Bosco Verticale). Fits your urban/spatial side better than interiors; has a jobs page and open channel.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.stefanoboeriarchitetti.net/en/jobs-en/", openingsNote:"Current listings are senior/mid only; the 2022 junior posting link is dead.", openingsChecked:"2026-07-29"},
+  {studio:"Studio Klass", status:"Interested", channel:"Email", contact:"careers@studioklass.com", location:"", teamSize:"2 founders", discipline:"Product, interior, creative direction", website:"https://studioklass.com/", specialization:"Product, Interior", whyFits:"Teaching ties to IED. Smallest team here, with a direct pipeline from design education.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://studioklass.com/studio", openingsNote:"Standing invite to apply for internships via careers@ — not a dated posting.", openingsChecked:"2026-07-29"},
+  {studio:"CrippaConcept", status:"Interested", channel:"Website", contact:"", location:"", teamSize:"", discipline:"Mobile-home / glamping manufacturer", website:"https://www.crippaconcept.com/", specialization:"Manufacturing", whyFits:"Not a design studio. Your existing warm connection via Prof. Trabattoni, thematically identical to Mechanisma, and the link into Matteo Thun & Partners.", portfolioPieces:"Mechanisma", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Couldn't determine", openingsUrl:"https://www.crippaconcept.com/en/join-us/", openingsNote:"Site returned server errors on every automated check — try in a regular browser.", openingsChecked:"2026-07-29"},
+  {studio:"Studio Urquiola", status:"Interested", channel:"Email", contact:"recruiting@patriciaurquiola.com", location:"", teamSize:"~40", discipline:"Architecture / interior / product", website:"https://patriciaurquiola.com/", specialization:"Architecture, Interior, Product", whyFits:"Globally prominent (Patricia Urquiola); expressive, eclectic work. Big CV value; also worth trying for an actual junior role given its size.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://patriciaurquiola.com/contact", openingsNote:"Standing invite to apply for internships via recruiting@ — not a dated posting.", openingsChecked:"2026-07-29"},
+  {studio:"LLABB", status:"Interested", channel:"Email", contact:"internship@llabb.eu", location:"Genova (not Milan)", teamSize:"", discipline:"Architecture (craft-rooted)", website:"https://llabb.eu/", specialization:"Architecture", whyFits:"Began as a carpentry workshop. Confirmed to host interns — worth the commute if hands-on material culture matters more than location.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Open listing found", openingsUrl:"https://llabb.eu/contact", openingsNote:"Dedicated internship@ address specifically for internship requests.", openingsChecked:"2026-07-29"},
   {studio:"Onsitestudio", status:"Rejected", channel:"Email", contact:"jobs@onsitestudio.it", location:"", teamSize:"~18", discipline:"Architecture", website:"https://www.onsitestudio.it/", specialization:"Architecture", whyFits:"Material- and context-sensitive studio. Officially registered internship host with real open slots; required software matches your toolkit almost exactly — confirm why this was auto-rejected before fully closing the door.", portfolioPieces:"", dateApplied:"", followUpDate:"", responseLog:"", openingsStatus:"Nothing posted", openingsUrl:"https://www.onsitestudio.it/", openingsNote:"No careers/jobs links found anywhere in navigation.", openingsChecked:"2026-07-29"}
 ];
 
 let data = [];
 let openIds = new Set();
 let currentUser = null;
+let selectMode = false;
+let selectedIds = new Set();
+
+function updateBulkBar(){
+  const bar = document.getElementById("bulkBar");
+  bar.style.display = selectMode ? "flex" : "none";
+  document.getElementById("bulkCount").textContent = `${selectedIds.size} selected`;
+  document.getElementById("bulkApplyBtn").disabled = selectedIds.size === 0;
+  document.getElementById("selectModeBtn").textContent = selectMode ? "Cancel select" : "Select";
+}
+
+async function applyBulkStatus(){
+  const newStatus = document.getElementById("bulkStatus").value;
+  if(!newStatus || selectedIds.size === 0) return;
+  const ids = [...selectedIds];
+  const { error } = await sb.from("studios").update({status: newStatus}).in("id", ids);
+  if(error){ showToast("Bulk update failed: " + error.message, true); return; }
+  ids.forEach(id=>{ const item = data.find(d=>d.id===id); if(item) item.status = newStatus; });
+  showToast(`Updated ${ids.length} studio${ids.length===1?"":"s"} to "${newStatus}"`);
+  selectedIds.clear();
+  selectMode = false;
+  updateBulkBar();
+  renderAll();
+}
 
 async function loadDataFromDb(){
   const { data: rows, error } = await sb.from("studios").select("*").order("created_at", {ascending:true});
@@ -597,6 +645,14 @@ function fieldRow(item, key, label, type){
   return `<div class="field"><label>${label}</label><input type="text" data-id="${item.id}" data-key="${key}" value="${escapeHtml(val)}"></div>`;
 }
 
+function readOnlyRow(item, key, label, kind){
+  const val = item[key] ?? "";
+  let display = `<span class="ro-value">${escapeHtml(val) || '<span class="openings-note">—</span>'}</span>`;
+  if(kind==="contact" && val.includes("@")) display = `<a class="mailto" href="mailto:${val}">${escapeHtml(val)}</a>`;
+  if(kind==="link" && val) display = `<a class="mailto" href="${escapeHtml(val)}" target="_blank" rel="noopener">${escapeHtml(val)}</a>`;
+  return `<div class="field"><label>${label}</label>${display}</div>`;
+}
+
 function specializationRow(item){
   const tags = specList(item);
   const chips = tags.length
@@ -604,7 +660,6 @@ function specializationRow(item){
     : `<span class="openings-note">None set</span>`;
   return `<div class="field full"><label>Specialization</label>
     <div class="openings-row">${chips}</div>
-    <input type="text" data-id="${item.id}" data-key="specialization" value="${escapeHtml(item.specialization||"")}" placeholder="Comma-separated: ${SPECIALIZATION_OPTIONS.join(', ')}">
   </div>`;
 }
 
@@ -641,31 +696,37 @@ function renderList(){
     const statusVars = STATUS_COLOR_VAR[item.status] || ["--border","--surface-2"];
     const open = openIds.has(item.id);
     const due = isFollowUpDue(item);
+    const selected = selectedIds.has(item.id);
     return `
-    <div class="card ${open?'open':''}" style="--status-color:var(${statusVars[0]})" data-card="${item.id}">
+    <div class="card ${open?'open':''} ${selected?'selected':''}" style="--status-color:var(${statusVars[0]})" data-card="${item.id}">
       <div class="card-head" data-toggle="${item.id}">
-        <span class="chev">&#9656;</span>
-        <span class="status-node" style="background:var(${statusVars[0]})" title="${escapeHtml(item.status)}"></span>
-        <span class="name">${escapeHtml(item.studio)}</span>
-        ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
-        ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
-        ${matchScore(item) > 0 ? `<span class="open-badge match-badge" title="Shares ${matchScore(item)} specialization(s) with your profile">&#9679; Match</span>` : ""}
-        ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
-        <span class="meta">${escapeHtml(item.channel)}${item.location?" · "+escapeHtml(item.location):""}</span>
-        <select class="status-select" data-id="${item.id}" data-key="status" style="color:var(${statusVars[0]});background-color:var(${statusVars[1]})">
-          ${STATUS_OPTIONS.map(o=>`<option value="${o}" ${o===item.status?"selected":""}>${o}</option>`).join("")}
-        </select>
+        ${selectMode ? `<input type="checkbox" class="select-checkbox" data-select="${item.id}" ${selected?"checked":""} onclick="event.stopPropagation()">` : ""}
+        <span class="status-node${item.openingsStatus==="Open listing found"?" has-opening":""}" style="background:var(${statusVars[0]})" title="${escapeHtml(item.status)}${item.openingsStatus==="Open listing found"?" — has an active opening":""}"></span>
+        <div class="card-head-main">
+          <span class="name">${escapeHtml(item.studio)}</span>
+          ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
+          ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
+          ${matchScore(item) > 0 ? `<span class="open-badge match-badge" title="Shares ${matchScore(item)} specialization(s) with your profile">&#9679; Match</span>` : ""}
+          ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
+          <span class="meta">${escapeHtml(item.channel)}${item.location?" · "+escapeHtml(item.location):""}</span>
+        </div>
+        <div class="card-head-right">
+          <select class="status-select" data-id="${item.id}" data-key="status" style="color:var(${statusVars[0]});background-color:var(${statusVars[1]})">
+            ${STATUS_OPTIONS.map(o=>`<option value="${o}" ${o===item.status?"selected":""}>${o}</option>`).join("")}
+          </select>
+          <span class="chev">&#9656;</span>
+        </div>
       </div>
       ${!open ? `<div class="why-preview">${escapeHtml(item.whyFits)}</div>` : ""}
       <div class="card-body">
         <div class="grid2">
-          ${fieldRow(item,"channel","Channel","select-channel")}
-          ${fieldRow(item,"contact","Contact","contact")}
-          ${fieldRow(item,"location","Location","text")}
-          ${fieldRow(item,"teamSize","Team Size","text")}
-          ${fieldRow(item,"discipline","Discipline","text")}
-          ${fieldRow(item,"website","Website","link")}
-          ${fieldRow(item,"portfolioPieces","Portfolio Pieces to Feature","text")}
+          ${readOnlyRow(item,"channel","Channel")}
+          ${readOnlyRow(item,"contact","Contact","contact")}
+          ${readOnlyRow(item,"location","Location")}
+          ${readOnlyRow(item,"teamSize","Team Size")}
+          ${readOnlyRow(item,"discipline","Discipline")}
+          ${readOnlyRow(item,"website","Website","link")}
+          ${readOnlyRow(item,"portfolioPieces","Portfolio Pieces to Feature")}
           ${fieldRow(item,"dateApplied","Date Applied","date")}
           ${fieldRow(item,"followUpDate","Follow-up Date","date")}
           ${specializationRow(item)}
@@ -681,7 +742,21 @@ function renderList(){
   listEl.querySelectorAll("[data-toggle]").forEach(el=>{
     el.addEventListener("click", ()=>{
       const id = el.getAttribute("data-toggle");
+      if(selectMode){
+        if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+        updateBulkBar();
+        renderList();
+        return;
+      }
       if(openIds.has(id)) openIds.delete(id); else openIds.add(id);
+      renderList();
+    });
+  });
+  listEl.querySelectorAll("[data-select]").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const id = el.getAttribute("data-select");
+      if(el.checked) selectedIds.add(id); else selectedIds.delete(id);
+      updateBulkBar();
       renderList();
     });
   });
@@ -717,6 +792,21 @@ function wireToolbar(){
   populateSelect(document.getElementById("filterStatus"), STATUS_OPTIONS, "All statuses");
   populateSelect(document.getElementById("filterChannel"), CHANNEL_OPTIONS, "All channels");
   populateSelect(document.getElementById("filterSpec"), SPECIALIZATION_OPTIONS, "All specializations");
+  document.getElementById("bulkStatus").innerHTML = STATUS_OPTIONS.map(o=>`<option value="${o}">${o}</option>`).join("");
+
+  document.getElementById("selectModeBtn").addEventListener("click", ()=>{
+    selectMode = !selectMode;
+    if(!selectMode) selectedIds.clear();
+    updateBulkBar();
+    renderList();
+  });
+  document.getElementById("bulkClearBtn").addEventListener("click", ()=>{
+    selectedIds.clear();
+    selectMode = false;
+    updateBulkBar();
+    renderList();
+  });
+  document.getElementById("bulkApplyBtn").addEventListener("click", applyBulkStatus);
 
   ["search","filterStatus","filterChannel","filterSpec"].forEach(id=>{
     const clearAndRender = ()=>{ activeStat = null; renderStats(); renderList(); };
