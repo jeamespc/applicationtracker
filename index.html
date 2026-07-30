@@ -1039,6 +1039,10 @@ async function onLoggedIn(user){
   document.getElementById("appScreen").style.display = "block";
   document.getElementById("authBar").style.display = "flex";
   document.getElementById("authWho").textContent = user.email;
+  // Browsers can restore a <details> element's open/closed state from
+  // session history on reload, overriding the HTML default - force it
+  // closed here so "How this works" behaves the same on every load.
+  document.querySelector("details.help").open = false;
   await ensureProfile(user);
   await loadDataFromDb();
   renderAll();
