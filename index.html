@@ -202,6 +202,39 @@
   }
   .starter-prompt .btn{margin-top:12px;}
   #addCompanyForm{display:none;}
+
+  @media(max-width:600px){
+    .wrap{padding:20px 16px 60px;}
+    h1{font-size:1.3rem;}
+    .sub{font-size:0.82rem;}
+    #authBar{flex-wrap:wrap; row-gap:6px;}
+
+    .stats{grid-template-columns:repeat(3,1fr);}
+    .stat{padding:9px 8px;}
+    .stat .n{font-size:1.15rem;}
+    .stat .l{font-size:0.56rem; letter-spacing:0.04em;}
+
+    .toolbar{flex-direction:column; align-items:stretch; padding:12px;}
+    .toolbar input[type="search"], .toolbar select, .toolbar .btn{width:100%; flex:none;}
+    .toolbar .spacer{display:none;}
+
+    /* The status dropdown was eating most of the row's width, squeezing the
+       studio name into ~90px and wrapping it across 2-3 lines. Wrapping the
+       right-hand controls onto their own full-width line fixes that. */
+    .card-head{flex-wrap:wrap; row-gap:8px; padding:10px 12px; gap:10px 14px;}
+    .card-head-right{flex-basis:100%; justify-content:space-between; padding-left:44px;}
+    .row-desc{white-space:normal; overflow:visible; text-overflow:clip;}
+
+    /* Inputs/selects under 16px trigger an auto-zoom on focus in iOS Safari,
+       which makes the whole page suddenly look "too big" mid-interaction. */
+    .toolbar input[type="search"], .toolbar select, .field input, .field select, .field textarea{
+      font-size:16px;
+    }
+
+    .key-grid{grid-template-columns:1fr;}
+    .modal-box{padding:18px;}
+    .auth-card{padding:20px;}
+  }
 </style>
 </head>
 <body>
