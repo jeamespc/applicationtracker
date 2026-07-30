@@ -1,15 +1,18 @@
 // Supabase Edge Function: research-company
-// Fetches a company's site and tries to find: a contact email, whether they
-// have an active internship/job opportunity, their location, and their
-// specialization. No AI/LLM involved - plain fetch + regex/JSON-LD parsing,
-// so it's free to run and has no external API key dependency. Location and
-// specialization are best-effort heuristics, not guaranteed - a script can't
-// reliably read unstructured HTML the way an LLM would - but leaving them
-// blank forever isn't useful either, so we try structured data first
-// (JSON-LD / schema.org markup, the most reliable signal) and fall back to
-// address/keyword regexes. To avoid clobbering good manually-curated data,
-// location and specialization are only written when the studio's row for
-// that field is still blank.
+// Fetches a company's site and tries to fill in everything the tracker can
+// reasonably infer without an LLM: contact email, location, specialization,
+// team size, contact channel, discipline, and whether they have an active
+// internship/job opportunity. No AI/LLM involved - plain fetch +
+// regex/JSON-LD parsing, so it's free to run and has no external API key
+// dependency. Location, specialization and team size are best-effort
+// heuristics, not guaranteed - a script can't reliably read unstructured
+// HTML the way an LLM would - but leaving them blank forever isn't useful
+// either, so we try structured data first (JSON-LD / schema.org markup, the
+// most reliable signal) and fall back to regexes. To avoid clobbering good
+// manually-curated data, every researched field below is only written when
+// the studio's row for that field is still blank (contact and the openings
+// fields are the exception - those always refresh, since they're meant to
+// reflect the current state of the site).
 //
 // Openings classifies into four states (matching the tracker's own categories):
 //   "Open listing found" - a specific, dated/named role (strong signal).
@@ -125,6 +128,28 @@ function extractSpecializations(text: string): string {
   return hits.join(", ");
 }
 
+const WORD_TO_NUMBER: Record<string, number> = {
+  two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  duo: 2, trio: 3,
+};
+
+// Best-effort headcount guess from common phrasing ("team of 12", "a team of
+// three architects", "20+ employees"). Returns a display string like the
+// tracker's own manually-entered examples ("~12", "3 founders") or null.
+function extractTeamSize(text: string): string | null {
+  const numeric = text.match(/\b(?:team of|a team of|we are|staff of)\s+(\d{1,3})\b/i)
+    || text.match(/\b(\d{1,3})\+?\s*(?:people|employees|staff|architects|designers|professionals|team\s?members)\b/i);
+  if (numeric) return `~${numeric[1]}`;
+
+  const worded = text.match(/\b(two|three|four|five|six|seven|eight|nine|ten|duo|trio)\s+(?:founders?|partners?|architects?|designers?)\b/i);
+  if (worded) {
+    const n = WORD_TO_NUMBER[worded[1].toLowerCase()];
+    if (n) return `${n} founders`;
+  }
+
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -146,7 +171,7 @@ Deno.serve(async (req) => {
 
     const { data: existingRow } = await supabase
       .from("studios")
-      .select("location, specialization")
+      .select("location, specialization, team_size, channel, discipline")
       .eq("id", studioId)
       .maybeSingle();
 
@@ -157,6 +182,7 @@ Deno.serve(async (req) => {
     let checkedAnyPage = false;
     let ownDomain = "";
     let foundLocation: string | null = null;
+    let foundTeamSize: string | null = null;
     const specHits = new Set<string>();
     try { ownDomain = new URL(website).hostname.replace(/^www\./, ""); } catch { /* leave blank */ }
 
@@ -182,6 +208,7 @@ Deno.serve(async (req) => {
         }
 
         if (!foundLocation) foundLocation = extractLocation(html, text);
+        if (!foundTeamSize) foundTeamSize = extractTeamSize(text);
         for (const tag of extractSpecializations(text).split(",").map((s) => s.trim()).filter(Boolean)) {
           specHits.add(tag);
         }
@@ -212,12 +239,27 @@ Deno.serve(async (req) => {
       openings_note: "Auto-checked (keyword match against the site's own pages, no AI analysis).",
       openings_checked: new Date().toISOString().slice(0, 10),
     };
-    if (foundEmail) updatePayload.contact = foundEmail;
-    // Only fill location/specialization when the row doesn't already have a
-    // value, so a bulk recheck never overwrites manually-curated data with a
-    // weaker regex guess.
+    if (foundEmail) {
+      updatePayload.contact = foundEmail;
+      if (!existingRow?.channel) updatePayload.channel = "Email";
+    } else if (checkedAnyPage && !existingRow?.channel) {
+      updatePayload.channel = "Website";
+    }
+
+    const specJoined = specHits.size ? [...specHits].join(", ") : null;
+
+    // Only fill location/specialization/team size/discipline when the row
+    // doesn't already have a value, so a bulk recheck never overwrites
+    // manually-curated data with a weaker regex guess.
     if (foundLocation && !existingRow?.location) updatePayload.location = foundLocation;
-    if (specHits.size && !existingRow?.specialization) updatePayload.specialization = [...specHits].join(", ");
+    if (specJoined && !existingRow?.specialization) updatePayload.specialization = specJoined;
+    if (foundTeamSize && !existingRow?.team_size) updatePayload.team_size = foundTeamSize;
+    // Discipline is a free-text summary; a script can't write real prose about
+    // a studio's practice without an LLM reading the whole site, so this just
+    // mirrors the detected specialization tags as a readable line - better
+    // than leaving it blank, but flagged here as the honest limit of what a
+    // keyword-matching approach can produce.
+    if (specJoined && !existingRow?.discipline) updatePayload.discipline = specJoined;
 
     const { error } = await supabase.from("studios").update(updatePayload).eq("id", studioId);
     if (error) throw error;
@@ -226,7 +268,8 @@ Deno.serve(async (req) => {
       ok: true,
       email: foundEmail || null,
       location: foundLocation,
-      specialization: specHits.size ? [...specHits].join(", ") : null,
+      specialization: specJoined,
+      teamSize: foundTeamSize,
       openingsStatus,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
