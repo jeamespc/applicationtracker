@@ -20,7 +20,7 @@
 //                           dedicated intake inbox, or generic "send your CV"
 //                           / "join us" language) but no specific role.
 //   "Nothing posted"      - pages were reachable, neither signal found.
-//   "Couldn't determine"  - every path was unreachable/timed out.
+//   "Uncertain"           - every path was unreachable/timed out.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -219,11 +219,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    let openingsStatus: "Open listing found" | "Open call" | "Nothing posted" | "Couldn't determine";
+    let openingsStatus: "Open listing found" | "Open call" | "Nothing posted" | "Uncertain";
     if (hasStrongSignal) openingsStatus = "Open listing found";
     else if (hasWeakSignal) openingsStatus = "Open call";
     else if (checkedAnyPage) openingsStatus = "Nothing posted";
-    else openingsStatus = "Couldn't determine";
+    else openingsStatus = "Uncertain";
 
     const updatePayload: Record<string, unknown> = {
       openings_status: openingsStatus,
