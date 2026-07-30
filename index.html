@@ -845,7 +845,7 @@ function renderList(){
         <div class="grid2">
           ${readOnlyRow(item,"channel","Channel")}
           ${readOnlyRow(item,"contact","Contact","contact")}
-          ${readOnlyRow(item,"location","Location")}
+          ${fieldRow(item,"location","Location")}
           ${readOnlyRow(item,"teamSize","Team Size")}
           ${readOnlyRow(item,"discipline","Discipline")}
           ${readOnlyRow(item,"website","Website","link")}
@@ -884,7 +884,7 @@ function renderList(){
       const key = el.getAttribute("data-key");
       await updateField(id, key, el.value);
       renderStats();
-      if(["status","channel","studio","followUpDate","website","specialization"].includes(key)){
+      if(["status","channel","studio","followUpDate","website","specialization","location"].includes(key)){
         renderList();
       }
     };

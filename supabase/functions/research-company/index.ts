@@ -47,17 +47,6 @@ const SPECIALIZATION_KEYWORDS: Record<string, RegExp> = {
   Manufacturing: /\bmanufactur(e|ing|er)\b|\bfactory\b/i,
 };
 
-// City name candidates for the plain-text location fallback - kept to the
-// design/architecture hubs this tracker's studios actually cluster around,
-// since an unbounded "any capitalized word" match is too noisy to trust.
-const KNOWN_CITIES = [
-  "Milan", "Milano", "Rome", "Roma", "Turin", "Torino", "Florence", "Firenze",
-  "Bologna", "Genoa", "Genova", "Venice", "Venezia", "Naples", "Napoli",
-  "London", "Paris", "Berlin", "Munich", "Munchen", "München", "Amsterdam",
-  "Rotterdam", "Barcelona", "Madrid", "Copenhagen", "Stockholm", "Vienna",
-  "Zurich", "Geneva", "New York", "Shanghai", "Beijing", "Tokyo", "Los Angeles",
-];
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -81,9 +70,14 @@ function stripTags(html: string): string {
     .trim();
 }
 
-// Tries schema.org JSON-LD (Organization/LocalBusiness address) first - the
-// most reliable signal when present - then falls back to an Italian-style
-// postal-code-plus-city pattern, then a plain "known city name" scan.
+// Tries schema.org JSON-LD (Organization/LocalBusiness address) first, then
+// SEO geo <meta> tags, then an Italian-style postal-code-plus-city pattern,
+// then explicit "based in / located in / headquartered in X" phrasing.
+// Deliberately does NOT fall back to "does any known city name appear
+// anywhere on this page" - that produced false positives (e.g. a studio's
+// past project in Rome getting mistaken for its Seattle HQ), which is worse
+// than leaving the field blank. Every signal here is anchored to something
+// that actually asserts a location, not just a stray mention.
 function extractLocation(html: string, text: string): string | null {
   const jsonLdBlocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
   for (const block of jsonLdBlocks) {
@@ -100,22 +94,19 @@ function extractLocation(html: string, text: string): string | null {
     }
   }
 
+  const metaGeo = html.match(/<meta[^>]+(?:name|property)=["'](?:geo\.placename|business:contact_data:locality|og:locality)["'][^>]+content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:name|property)=["'](?:geo\.placename|business:contact_data:locality|og:locality)["']/i);
+  if (metaGeo && metaGeo[1].trim()) return metaGeo[1].trim();
+
   const capWord = "[A-ZÀ-Ý][a-zà-ÿ'\\-]+";
   const capPhrase = `${capWord}(?:\\s${capWord})*`;
   const italianCap = new RegExp(`\\b\\d{5}\\s+(${capPhrase})\\s*[,(]?\\s*(?:Italy|Italia|MI|IT)\\b`, "i");
   const italianMatch = text.match(italianCap);
   if (italianMatch) return italianMatch[1].trim();
 
-  const basedIn = new RegExp(`\\b(?:based|located)\\s+in\\s+(${capPhrase})`, "i");
+  const basedIn = new RegExp(`\\b(?:based|located|headquartered)\\s+in\\s+(?:the\\s+)?(${capPhrase})`, "i");
   const basedMatch = text.match(basedIn);
-  if (basedMatch && KNOWN_CITIES.some((c) => c.toLowerCase() === basedMatch[1].toLowerCase())) {
-    return basedMatch[1].trim();
-  }
-
-  for (const city of KNOWN_CITIES) {
-    const re = new RegExp(`\\b${city}\\b`, "i");
-    if (re.test(text)) return city;
-  }
+  if (basedMatch) return basedMatch[1].trim();
 
   return null;
 }
