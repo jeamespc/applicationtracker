@@ -140,7 +140,6 @@
     font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; flex:0 0 auto;
     color:var(--accent-contrast); background:var(--stProgress);
   }
-  .open-badge.match-badge{background:var(--stApplied);}
   .open-badge.open-call-badge{background:var(--stReady); color:var(--text);}
   .open-badge.researching-badge{background:var(--text-faint); animation:researchPulse 1.2s ease-in-out infinite;}
   @keyframes researchPulse{ 0%,100%{opacity:1;} 50%{opacity:0.45;} }
@@ -247,12 +246,6 @@
             <div class="field"><label>Last Name</label><input type="text" id="authLastName"></div>
           </div>
           <div class="field"><label>Location</label><input type="text" id="authLocation" placeholder="e.g. Milan, Italy"></div>
-          <div class="field">
-            <label>Specialization</label>
-            <div id="authSpecCheckboxes"></div>
-          </div>
-          <div class="field"><label>Portfolio (optional, PDF)</label><input type="file" id="authPortfolio" accept="application/pdf,image/*"></div>
-          <div class="field"><label>CV (optional, PDF)</label><input type="file" id="authCv" accept="application/pdf"></div>
         </div>
 
         <div style="display:flex; gap:8px; margin-top:14px;">
@@ -268,24 +261,12 @@
     <div class="auth-wrap">
       <div class="auth-card" style="max-width:440px;">
         <h2>My Profile</h2>
-        <p class="sub">Used to match you against studios in your list.</p>
+        <p class="sub">Your account details.</p>
         <div class="grid2">
           <div class="field"><label>First Name</label><input type="text" id="profFirstName"></div>
           <div class="field"><label>Last Name</label><input type="text" id="profLastName"></div>
         </div>
         <div class="field"><label>Location</label><input type="text" id="profLocation"></div>
-        <div class="field">
-          <label>Specialization</label>
-          <div id="profSpecCheckboxes"></div>
-        </div>
-        <div class="field"><label>Portfolio (PDF)</label>
-          <div class="openings-row" id="profPortfolioCurrent"></div>
-          <input type="file" id="profPortfolio" accept="application/pdf,image/*">
-        </div>
-        <div class="field"><label>CV (PDF)</label>
-          <div class="openings-row" id="profCvCurrent"></div>
-          <input type="file" id="profCv" accept="application/pdf">
-        </div>
         <div style="display:flex; gap:8px; margin-top:14px;">
           <button class="btn primary" id="profSaveBtn">Save profile</button>
           <button class="btn" id="profCloseBtn">Close</button>
@@ -308,7 +289,6 @@
         <option value="name">Sort: Studio A–Z</option>
         <option value="followup">Sort: Follow-up date</option>
         <option value="teamSize">Sort: Team size</option>
-        <option value="match">Sort: Best match (my profile)</option>
         <option value="opening">Sort: Open listing first</option>
       </select>
       <div class="spacer"></div>
@@ -707,20 +687,11 @@ function parseTeamSize(str){
   return null;
 }
 
-function matchScore(item){
-  if(!currentProfile || !currentProfile.specialization) return 0;
-  const mine = specList({specialization: currentProfile.specialization});
-  if(!mine.length) return 0;
-  const theirs = specList(item);
-  return mine.filter(s=>theirs.includes(s)).length;
-}
-
 function sortItems(items){
   const by = document.getElementById("sortBy").value;
   const arr = [...items];
   if(by==="name") arr.sort((a,b)=>a.studio.localeCompare(b.studio));
   else if(by==="followup") arr.sort((a,b)=>(a.followUpDate||"9999").localeCompare(b.followUpDate||"9999"));
-  else if(by==="match") arr.sort((a,b)=> matchScore(b)-matchScore(a) || a.studio.localeCompare(b.studio));
   else if(by==="opening") arr.sort((a,b)=>{
     const oa = hasActiveOpening(a) ? 0 : 1;
     const ob = hasActiveOpening(b) ? 0 : 1;
@@ -831,7 +802,6 @@ function renderList(){
             ${researchingIds.has(item.id) ? `<span class="open-badge researching-badge">Researching&#8230;</span>` : ""}
             ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
             ${item.openingsStatus==="Open call" ? `<span class="open-badge open-call-badge" title="${escapeHtml(item.openingsNote||"Open call")}">&#9679; Open call</span>` : ""}
-            ${matchScore(item) > 0 ? `<span class="open-badge match-badge" title="Shares ${matchScore(item)} specialization(s) with your profile">&#9679; Match</span>` : ""}
             ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
           </div>
           <span class="row-desc">${escapeHtml(locSpecLine(item))}</span>
@@ -1008,32 +978,11 @@ function downloadBlob(blob, filename){
 let authMode = "signin";
 let currentProfile = null;
 
-function specCheckboxesHtml(containerIdPrefix, checkedList){
-  return SPECIALIZATION_OPTIONS.map(opt=>{
-    const checked = checkedList.includes(opt) ? "checked" : "";
-    return `<label style="display:inline-flex; align-items:center; gap:5px; margin:3px 10px 3px 0; font-size:0.8rem; text-transform:none; font-weight:400;">
-      <input type="checkbox" value="${opt}" data-spec-group="${containerIdPrefix}" ${checked}> ${opt}
-    </label>`;
-  }).join("");
-}
-function getCheckedSpecs(containerId){
-  return [...document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)].map(el=>el.value);
-}
-
 function showAuthScreen(){
   document.getElementById("authScreen").style.display = "block";
   document.getElementById("appScreen").style.display = "none";
   document.getElementById("profileScreen").style.display = "none";
   document.getElementById("authBar").style.display = "none";
-  document.getElementById("authSpecCheckboxes").innerHTML = specCheckboxesHtml("authSpecCheckboxes", []);
-}
-
-async function uploadUserFile(userId, file, kind){
-  if(!file) return null;
-  const path = `${userId}/${kind}-${Date.now()}-${file.name}`;
-  const { error } = await sb.storage.from("user-files").upload(path, file);
-  if(error){ showToast("Upload failed: " + error.message, true); return null; }
-  return path;
 }
 
 async function ensureProfile(user){
@@ -1096,24 +1045,16 @@ async function doSignUp(){
   const profileFields = {
     first_name: document.getElementById("authFirstName").value.trim(),
     last_name: document.getElementById("authLastName").value.trim(),
-    location: document.getElementById("authLocation").value.trim(),
-    specialization: getCheckedSpecs("authSpecCheckboxes").join(", ")
+    location: document.getElementById("authLocation").value.trim()
   };
-  const portfolioFile = document.getElementById("authPortfolio").files[0];
-  const cvFile = document.getElementById("authCv").files[0];
 
   const { data: signUpData, error } = await sb.auth.signUp({ email, password });
   if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; return; }
 
   if(signUpData.session){
-    // Have an authenticated session immediately (email confirmation off) - files can upload now.
-    const portfolioPath = await uploadUserFile(signUpData.user.id, portfolioFile, "portfolio");
-    const cvPath = await uploadUserFile(signUpData.user.id, cvFile, "cv");
-    if(portfolioPath) profileFields.portfolio_path = portfolioPath;
-    if(cvPath) profileFields.cv_path = cvPath;
     msg.textContent = "";
   } else {
-    msg.textContent = "Check your email to confirm your account, then log in — your profile details will be saved once you do. Portfolio/CV uploads will need to be re-added after (re-selecting a file isn't possible until you're signed in).";
+    msg.textContent = "Check your email to confirm your account, then log in — your profile details will be saved once you do.";
   }
   // Stashed either way; ensureProfile() (called from onLoggedIn, triggered by the
   // auth-state-change event this signUp/signIn fires) is the single place that
@@ -1143,13 +1084,6 @@ function wireAuth(){
   document.getElementById("profSaveBtn").addEventListener("click", saveProfile);
 }
 
-async function fileLinkHtml(path, label){
-  if(!path) return `<span class="openings-note">No ${label} uploaded yet.</span>`;
-  const { data, error } = await sb.storage.from("user-files").createSignedUrl(path, 3600);
-  if(error || !data) return `<span class="openings-note">${label} on file (link unavailable).</span>`;
-  return `<a href="${data.signedUrl}" target="_blank" rel="noopener">Current ${label} &#8599;</a>`;
-}
-
 async function openProfileScreen(){
   document.getElementById("appScreen").style.display = "none";
   document.getElementById("profileScreen").style.display = "block";
@@ -1158,9 +1092,6 @@ async function openProfileScreen(){
   document.getElementById("profFirstName").value = currentProfile.first_name || "";
   document.getElementById("profLastName").value = currentProfile.last_name || "";
   document.getElementById("profLocation").value = currentProfile.location || "";
-  document.getElementById("profSpecCheckboxes").innerHTML = specCheckboxesHtml("profSpecCheckboxes", specList({specialization: currentProfile.specialization||""}));
-  document.getElementById("profPortfolioCurrent").innerHTML = await fileLinkHtml(currentProfile.portfolio_path, "portfolio");
-  document.getElementById("profCvCurrent").innerHTML = await fileLinkHtml(currentProfile.cv_path, "CV");
   document.getElementById("profMsg").textContent = "";
 }
 
@@ -1170,13 +1101,8 @@ async function saveProfile(){
   const fields = {
     first_name: document.getElementById("profFirstName").value.trim(),
     last_name: document.getElementById("profLastName").value.trim(),
-    location: document.getElementById("profLocation").value.trim(),
-    specialization: getCheckedSpecs("profSpecCheckboxes").join(", ")
+    location: document.getElementById("profLocation").value.trim()
   };
-  const portfolioFile = document.getElementById("profPortfolio").files[0];
-  const cvFile = document.getElementById("profCv").files[0];
-  if(portfolioFile){ const p = await uploadUserFile(currentUser.id, portfolioFile, "portfolio"); if(p) fields.portfolio_path = p; }
-  if(cvFile){ const p = await uploadUserFile(currentUser.id, cvFile, "cv"); if(p) fields.cv_path = p; }
 
   const { error } = await sb.from("profiles").update(fields).eq("id", currentUser.id);
   if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; return; }
