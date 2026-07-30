@@ -184,13 +184,20 @@
 
   .empty{text-align:center; color:var(--text-faint); padding:40px 0; font-size:0.9rem; border:1px solid var(--border);}
 
-  details.help{background:var(--surface); border:1px solid var(--border); margin-top:24px;}
+  details.help{background:var(--surface); border:1px solid var(--border); margin-bottom:24px;}
   details.help summary{padding:12px 16px; cursor:pointer; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.04em;}
   details.help .help-body{padding:0 16px 16px; font-size:0.85rem; color:var(--text-dim); line-height:1.55;}
   details.help .help-body h4{color:var(--text); margin:14px 0 4px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;}
   details.help .help-body ul{margin:4px 0; padding-left:18px;}
   .legend-row{display:flex; align-items:center; gap:8px; margin:3px 0;}
   .swatch{width:12px; height:12px; flex:0 0 auto;}
+
+  .key-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px; margin:8px 0 4px;}
+  .key-item{display:flex; align-items:flex-start; gap:10px; padding:8px 10px; background:var(--surface-2); border:1px solid var(--border);}
+  .key-swatch{width:22px; height:22px; flex:0 0 auto; border:1px solid var(--border);}
+  .key-text{display:flex; flex-direction:column; gap:1px;}
+  .key-label{font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.03em; color:var(--text);}
+  .key-desc{font-size:0.76rem; color:var(--text-dim); line-height:1.4;}
 
   .toast{
     position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -277,6 +284,47 @@
   </div>
 
   <div id="appScreen" style="display:none;">
+    <details class="help" open>
+    <summary>How this works</summary>
+    <div class="help-body">
+      <h4>Status key</h4>
+      <div class="key-grid">
+        <div class="key-item"><span class="key-swatch" style="background:var(--stInterested)"></span><span class="key-text"><span class="key-label">Interested</span><span class="key-desc">Noted, not vetted/prioritized yet.</span></span></div>
+        <div class="key-item"><span class="key-swatch" style="background:var(--stReady)"></span><span class="key-text"><span class="key-label">Ready to Apply</span><span class="key-desc">Vetted, haven't sent anything yet.</span></span></div>
+        <div class="key-item"><span class="key-swatch" style="background:var(--stApplied)"></span><span class="key-text"><span class="key-label">Applied</span><span class="key-desc">Sent, waiting to hear back.</span></span></div>
+        <div class="key-item"><span class="key-swatch" style="background:var(--stProgress)"></span><span class="key-text"><span class="key-label">In Progress</span><span class="key-desc">They've responded, past the first stage. Good sign.</span></span></div>
+        <div class="key-item"><span class="key-swatch" style="background:var(--stRejected)"></span><span class="key-text"><span class="key-label">Rejected</span><span class="key-desc">Not pursuing.</span></span></div>
+      </div>
+      <p>The colored square on each studio's row (and the dropdown next to it) shows/edits Status directly without opening the card. A square that's lit up with a glow means that studio has an active opening.</p>
+      <h4>Openings check key</h4>
+      <div class="key-grid">
+        <div class="key-item"><span class="key-swatch" style="background:var(--stProgress)"></span><span class="key-text"><span class="key-label">Open listing</span><span class="key-desc">A specific, dated role was found on their site.</span></span></div>
+        <div class="key-item"><span class="key-swatch" style="background:var(--stReady)"></span><span class="key-text"><span class="key-label">Open call</span><span class="key-desc">Standing invite to apply speculatively (e.g. a dedicated internship email) — no posted vacancy.</span></span></div>
+        <div class="key-item"><span class="key-swatch" style="background:var(--text-faint)"></span><span class="key-text"><span class="key-label">Nothing posted</span><span class="key-desc">Site was reachable, no opening or call found.</span></span></div>
+        <div class="key-item"><span class="key-swatch" style="background:var(--stReady)"></span><span class="key-text"><span class="key-label">Couldn't determine</span><span class="key-desc">Site was unreachable during the check — try again or check manually.</span></span></div>
+      </div>
+      <p>Each studio's card (expand it to see) has an Openings Check row showing which of the above applies, a link to what was checked, and the date.</p>
+      <h4>Suggested workflow per studio</h4>
+      <ul>
+        <li>Confirm the contact or posting is still live.</li>
+        <li>Tailor your CV and a short intro email or website application.</li>
+        <li>Send — set Status to "Applied", fill Date Applied, set Follow-up Date (~2 weeks out).</li>
+        <li>On response, set Status to "In Progress" and log it in Response Log.</li>
+        <li>A small red dot on a card means its follow-up date has arrived — that's your action list.</li>
+      </ul>
+      <p>Some Location, Team Size and Contact fields are blank where the original notes didn't specify — confirm before applying rather than assuming.</p>
+      <h4>Your data</h4>
+      <p>Your data lives in your account (Supabase) and syncs wherever you log in. Each account's list is private — nobody else can see or edit it.</p>
+      <h4>Backup your data</h4>
+      <p>Export a local copy occasionally as a safety net.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+        <button class="btn" id="exportJson">Export backup (JSON)</button>
+        <button class="btn" id="importJsonBtn">Import backup</button>
+        <button class="btn" id="exportCsv">Export CSV</button>
+      </div>
+    </div>
+    </details>
+
     <div class="stats" id="stats"></div>
 
     <div class="toolbar">
@@ -321,38 +369,6 @@
 
     <div class="list" id="list"></div>
     <div class="empty" id="emptyMsg" style="display:none;">No studios match this filter.</div>
-
-    <details class="help">
-    <summary>How this works</summary>
-    <div class="help-body">
-      <p>Your data lives in your account (Supabase) and syncs wherever you log in. Each account's list is private — nobody else can see or edit it.</p>
-      <h4>Backup your data</h4>
-      <p>Export a local copy occasionally as a safety net.</p>
-      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
-        <button class="btn" id="exportJson">Export backup (JSON)</button>
-        <button class="btn" id="importJsonBtn">Import backup</button>
-        <button class="btn" id="exportCsv">Export CSV</button>
-      </div>
-      <h4>Status</h4>
-      <div class="legend-row"><span class="swatch" style="background:var(--stInterested)"></span>Interested — noted, not vetted/prioritized yet.</div>
-      <div class="legend-row"><span class="swatch" style="background:var(--stReady)"></span>Ready to Apply — vetted, haven't sent anything yet.</div>
-      <div class="legend-row"><span class="swatch" style="background:var(--stApplied)"></span>Applied — sent, waiting to hear back.</div>
-      <div class="legend-row"><span class="swatch" style="background:var(--stProgress)"></span>In Progress — they've responded, you're past the first stage. Good sign.</div>
-      <div class="legend-row"><span class="swatch" style="background:var(--stRejected)"></span>Rejected — not pursuing. Onsitestudio is pre-filled here from the original doc, but its own note flags open slots and a toolkit match, so it's worth a second look before fully closing that door.</div>
-      <p>The dropdown on each studio's row (right side, next to the channel/location) edits Status directly without opening the card.</p>
-      <h4>Openings check</h4>
-      <p>Each studio's card (expand it to see) has an Openings Check row from a site check — whether they currently have something open, a link to what was checked, and the date. <strong>Open listing</strong> means a specific, dated role was found; <strong>Open call</strong> means the studio has a standing invite to send speculative applications (e.g. a dedicated internship email) rather than a posted vacancy — worth an email either way, just set your expectations accordingly.</p>
-      <h4>Suggested workflow per studio</h4>
-      <ul>
-        <li>Confirm the contact or posting is still live.</li>
-        <li>Tailor your CV and a short intro email or website application.</li>
-        <li>Send — set Status to "Applied", fill Date Applied, set Follow-up Date (~2 weeks out).</li>
-        <li>On response, set Status to "In Progress" and log it in Response Log.</li>
-        <li>A small red dot on a card means its follow-up date has arrived — that's your action list.</li>
-      </ul>
-      <p>Some Location, Team Size and Contact fields are blank where the original notes didn't specify — confirm before applying rather than assuming.</p>
-    </div>
-    </details>
   </div>
 </div>
 
