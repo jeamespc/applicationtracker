@@ -784,14 +784,20 @@ function specializationRow(item){
 
 function openingsRow(item){
   const vars = OPENINGS_COLOR_VAR[item.openingsStatus] || ["--text-faint","--surface-2"];
-  const link = item.openingsUrl ? `<a href="${escapeHtml(item.openingsUrl)}" target="_blank" rel="noopener">${escapeHtml(item.openingsUrl)}</a>` : "";
-  return `<div class="field full"><label>Openings Check</label>
-    <div class="openings-row">
-      <span class="badge" style="color:var(${vars[0]});background:var(${vars[1]})">${escapeHtml(item.openingsStatus||"Not checked yet")}</span>
-      ${link}
-      <span class="openings-note">${escapeHtml(item.openingsNote||"")}${item.openingsChecked?` (checked ${escapeHtml(item.openingsChecked)})`:""}</span>
+  const statusOptions = ["", "Open listing found", "Open call", "Nothing posted", "Couldn't determine"];
+  return `
+    <div class="field"><label>Openings Status</label>
+      <select data-id="${item.id}" data-key="openingsStatus" style="color:var(${vars[0]});background:var(${vars[1]})">
+        ${statusOptions.map(o=>`<option value="${o}" ${o===(item.openingsStatus||"")?"selected":""}>${o||"Not checked yet"}</option>`).join("")}
+      </select>
     </div>
-  </div>`;
+    <div class="field"><label>Openings Link</label>
+      <input type="text" data-id="${item.id}" data-key="openingsUrl" value="${escapeHtml(item.openingsUrl||"")}">
+    </div>
+    <div class="field full"><label>Openings Note</label>
+      <input type="text" data-id="${item.id}" data-key="openingsNote" value="${escapeHtml(item.openingsNote||"")}">
+      ${item.openingsChecked ? `<span class="openings-note">Last checked ${escapeHtml(item.openingsChecked)}</span>` : ""}
+    </div>`;
 }
 
 function escapeHtml(s){
@@ -886,8 +892,13 @@ function renderList(){
       const id = el.getAttribute("data-id");
       const key = el.getAttribute("data-key");
       await updateField(id, key, el.value);
+      if(key==="openingsStatus"){
+        // Stamp today's date so a manual correction reads as "verified just
+        // now" rather than showing whatever date the last automated check ran.
+        await updateField(id, "openingsChecked", new Date().toISOString().slice(0,10));
+      }
       renderStats();
-      if(["status","channel","studio","followUpDate","website","specialization","location"].includes(key)){
+      if(["status","channel","studio","followUpDate","website","specialization","location","openingsStatus"].includes(key)){
         renderList();
       }
     };
