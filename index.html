@@ -986,9 +986,9 @@ function showAuthScreen(){
 }
 
 async function ensureProfile(user){
-  const pending = sessionStorage.getItem("pendingProfile");
+  const pending = localStorage.getItem("pendingProfile");
   const pendingFields = pending ? JSON.parse(pending) : null;
-  if(pending) sessionStorage.removeItem("pendingProfile");
+  if(pending) localStorage.removeItem("pendingProfile");
 
   const { data: existing } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
   if(existing){
@@ -1056,10 +1056,12 @@ async function doSignUp(){
   } else {
     msg.textContent = "Check your email to confirm your account, then log in — your profile details will be saved once you do.";
   }
-  // Stashed either way; ensureProfile() (called from onLoggedIn, triggered by the
-  // auth-state-change event this signUp/signIn fires) is the single place that
-  // actually writes the profiles row, so there's no race with a second writer.
-  sessionStorage.setItem("pendingProfile", JSON.stringify(profileFields));
+  // Stashed in localStorage (not sessionStorage) so it survives the email
+  // confirmation link opening in a new tab. ensureProfile() (called from
+  // onLoggedIn, triggered by the auth-state-change event this signUp/signIn
+  // fires) is the single place that actually writes the profiles row, so
+  // there's no race with a second writer.
+  localStorage.setItem("pendingProfile", JSON.stringify(profileFields));
 }
 
 function wireAuth(){
