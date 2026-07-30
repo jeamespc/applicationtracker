@@ -157,6 +157,37 @@
   .openings-row a:hover{text-decoration:underline;}
   .openings-note{color:var(--text-dim); font-size:0.78rem; width:100%;}
 
+  .spec-chip{
+    display:inline-flex; align-items:center; gap:5px; margin:0; font-size:0.8rem;
+    text-transform:none; font-weight:400;
+  }
+  .spec-chip-other{
+    background:var(--surface-2); border:1px solid var(--border); padding:2px 4px 2px 8px;
+  }
+  .spec-chip-other .spec-other-input{
+    background:transparent; border:none; color:var(--text); padding:2px 0; font-size:0.8rem;
+    font-family:inherit; width:110px;
+  }
+  .spec-chip-remove{
+    background:transparent; border:none; color:var(--text-faint); cursor:pointer;
+    font-size:0.95rem; line-height:1; padding:0 2px;
+  }
+  .spec-chip-remove:hover{color:var(--stRejected);}
+  .spec-add-btn{
+    background:transparent; border:1px dashed var(--border); color:var(--text-dim);
+    cursor:pointer; padding:3px 9px; font-size:0.78rem; font-family:inherit;
+  }
+  .spec-add-btn:hover{color:var(--text); border-color:var(--text-dim);}
+
+  .openings-status-select{
+    display:inline-flex; align-items:center; border:none; cursor:pointer; font-family:inherit;
+    -webkit-appearance:none; appearance:none;
+    padding:3px 20px 3px 8px; font-size:0.64rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.04em; white-space:nowrap; flex:0 0 auto;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%230A0A0A' d='M2.5 4.5l3.5 3.5 3.5-3.5z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 6px center; background-size:8px;
+  }
+
   .other-notes-box{background:var(--surface); border:1px solid var(--border); padding:14px 16px; margin-bottom:16px;}
   .other-notes-box label{display:block; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); font-weight:700; margin-bottom:8px;}
   .other-notes-box textarea{
@@ -781,38 +812,42 @@ function fieldRow(item, key, label, type){
   return `<div class="field"><label>${label}</label><input type="text" data-id="${item.id}" data-key="${key}" value="${escapeHtml(val)}"></div>`;
 }
 
+const extraSpecSlots = {};
+
 function specializationRow(item){
   const tags = specList(item);
   const otherTags = tags.filter(t=>!SPECIALIZATION_OPTIONS.includes(t));
+  const blanks = extraSpecSlots[item.id]||0;
   const boxes = SPECIALIZATION_OPTIONS.map(opt=>{
     const checked = tags.includes(opt) ? "checked" : "";
-    return `<label style="display:inline-flex; align-items:center; gap:5px; margin:3px 10px 3px 0; font-size:0.8rem; text-transform:none; font-weight:400;">
+    return `<label class="spec-chip">
       <input type="checkbox" value="${opt}" data-spec-id="${item.id}" ${checked}> ${escapeHtml(opt)}
     </label>`;
   }).join("");
+  const allOther = [...otherTags, ...Array(blanks).fill("")];
+  const otherChips = allOther.map((t,i)=>`<span class="spec-chip spec-chip-other">
+      <input type="text" class="spec-other-input" data-spec-other-id="${item.id}" data-spec-other-idx="${i}" value="${escapeHtml(t)}" placeholder="Specialization">
+      <button type="button" class="spec-chip-remove" data-spec-remove-id="${item.id}" data-spec-remove-idx="${i}" title="Remove">&times;</button>
+    </span>`).join("");
   return `<div class="field full"><label>Specialization</label>
-    <div class="openings-row" data-spec-group="${item.id}">${boxes}</div>
-    <input type="text" data-spec-other-id="${item.id}" placeholder="Other (comma separated)" value="${escapeHtml(otherTags.join(", "))}"
-      style="margin-top:6px; width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:6px 9px; font-size:0.8rem; font-family:inherit;">
+    <div class="openings-row" data-spec-group="${item.id}">${boxes}${otherChips}<button type="button" class="spec-chip spec-add-btn" data-spec-add="${item.id}">+ Add another</button></div>
   </div>`;
 }
 
 function openingsRow(item){
-  const vars = OPENINGS_COLOR_VAR[item.openingsStatus] || ["--text-faint","--surface-2"];
-  const statusOptions = ["", "Open listing found", "Open call", "Nothing posted", "Couldn't determine"];
   return `
-    <div class="field"><label>Openings Status</label>
-      <select data-id="${item.id}" data-key="openingsStatus" style="color:var(${vars[0]});background:var(${vars[1]})">
-        ${statusOptions.map(o=>`<option value="${o}" ${o===(item.openingsStatus||"")?"selected":""}>${o||"Not checked yet"}</option>`).join("")}
-      </select>
-    </div>
-    <div class="field"><label>Openings Link</label>
-      <input type="text" data-id="${item.id}" data-key="openingsUrl" value="${escapeHtml(item.openingsUrl||"")}">
-    </div>
     <div class="field full"><label>Openings Note</label>
       <input type="text" data-id="${item.id}" data-key="openingsNote" value="${escapeHtml(item.openingsNote||"")}">
       ${item.openingsChecked ? `<span class="openings-note">Last checked ${escapeHtml(item.openingsChecked)}</span>` : ""}
     </div>`;
+}
+
+function openingsStatusSelect(item){
+  const vars = OPENINGS_COLOR_VAR[item.openingsStatus] || ["--text-faint","--surface-2"];
+  const statusOptions = ["", "Open listing found", "Open call", "Nothing posted", "Couldn't determine"];
+  return `<select class="openings-status-select" data-id="${item.id}" data-key="openingsStatus" style="color:var(${vars[0]});background-color:var(${vars[1]})" title="${escapeHtml(item.openingsNote||"")}">
+    ${statusOptions.map(o=>`<option value="${o}" ${o===(item.openingsStatus||"")?"selected":""}>${o||"Not checked yet"}</option>`).join("")}
+  </select>`;
 }
 
 function escapeHtml(s){
@@ -852,8 +887,7 @@ function renderList(){
             <span class="name">${escapeHtml(item.studio)}</span>
             ${item.website ? `<a class="site-link" href="${escapeHtml(item.website)}" target="_blank" rel="noopener" title="Open studio website" onclick="event.stopPropagation()">&#8599;</a>` : ""}
             ${researchingIds.has(item.id) ? `<span class="open-badge researching-badge">Researching&#8230;</span>` : ""}
-            ${item.openingsStatus==="Open listing found" ? `<span class="open-badge" title="${escapeHtml(item.openingsNote||"Open listing found")}">&#9679; Open listing</span>` : ""}
-            ${item.openingsStatus==="Open call" ? `<span class="open-badge open-call-badge" title="${escapeHtml(item.openingsNote||"Open call")}">&#9679; Open call</span>` : ""}
+            ${openingsStatusSelect(item)}
             ${due ? '<span class="due-dot" title="Follow-up due"></span>' : ""}
           </div>
           <span class="row-desc">${escapeHtml(locSpecLine(item))}</span>
@@ -871,10 +905,8 @@ function renderList(){
           ${fieldRow(item,"contact","Contact","contact")}
           ${fieldRow(item,"location","Location")}
           ${fieldRow(item,"teamSize","Team Size")}
-          ${fieldRow(item,"discipline","Discipline")}
           ${fieldRow(item,"website","Website","link")}
           ${fieldRow(item,"dateApplied","Date Applied","date")}
-          ${fieldRow(item,"followUpDate","Follow-up Date","date")}
           ${specializationRow(item)}
           ${fieldRow(item,"whyFits","Why It Fits / Notes","textarea")}
           ${fieldRow(item,"responseLog","Response Log","textarea")}
@@ -893,7 +925,7 @@ function renderList(){
       renderList();
     });
   });
-  listEl.querySelectorAll(".status-select").forEach(el=>{
+  listEl.querySelectorAll(".status-select, .openings-status-select").forEach(el=>{
     el.addEventListener("click", (e)=> e.stopPropagation());
   });
   listEl.querySelectorAll("[data-delete]").forEach(el=>{
@@ -925,19 +957,46 @@ function renderList(){
   const syncSpecialization = async (id)=>{
     const group = listEl.querySelector(`[data-spec-group="${id}"]`);
     const checked = [...group.querySelectorAll("input:checked")].map(c=>c.value);
-    const otherInput = listEl.querySelector(`[data-spec-other-id="${id}"]`);
-    const otherTags = otherInput ? otherInput.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
-    await updateField(id, "specialization", [...checked, ...otherTags].join(", "));
+    const otherInputs = [...group.querySelectorAll(".spec-other-input")].map(i=>i.value.trim()).filter(Boolean);
+    extraSpecSlots[id] = 0;
+    await updateField(id, "specialization", [...checked, ...otherInputs].join(", "));
     renderStats();
     renderList();
   };
   listEl.querySelectorAll("[data-spec-id]").forEach(el=>{
     el.addEventListener("change", ()=> syncSpecialization(el.getAttribute("data-spec-id")));
   });
-  listEl.querySelectorAll("[data-spec-other-id]").forEach(el=>{
+  listEl.querySelectorAll(".spec-other-input").forEach(el=>{
     const handler = ()=> syncSpecialization(el.getAttribute("data-spec-other-id"));
     el.addEventListener("change", handler);
     el.addEventListener("blur", handler);
+  });
+  listEl.querySelectorAll("[data-spec-remove-id]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const id = el.getAttribute("data-spec-remove-id");
+      const idx = Number(el.getAttribute("data-spec-remove-idx"));
+      const group = listEl.querySelector(`[data-spec-group="${id}"]`);
+      const checked = [...group.querySelectorAll("input:checked")].map(c=>c.value);
+      const otherInputs = [...group.querySelectorAll(".spec-other-input")].map(i=>i.value.trim());
+      otherInputs.splice(idx,1);
+      extraSpecSlots[id] = 0;
+      updateField(id, "specialization", [...checked, ...otherInputs.filter(Boolean)].join(", ")).then(()=>{
+        renderStats();
+        renderList();
+      });
+    });
+  });
+  listEl.querySelectorAll("[data-spec-add]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const id = el.getAttribute("data-spec-add");
+      extraSpecSlots[id] = (extraSpecSlots[id]||0) + 1;
+      renderList();
+      const group = listEl.querySelector(`[data-spec-group="${id}"]`);
+      const inputs = group ? group.querySelectorAll(".spec-other-input") : [];
+      if(inputs.length) inputs[inputs.length-1].focus();
+    });
   });
 }
 
