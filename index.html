@@ -199,6 +199,12 @@
   .key-label{font-weight:700; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.03em; color:var(--text);}
   .key-desc{font-size:0.76rem; color:var(--text-dim); line-height:1.4;}
 
+  .modal-overlay{position:fixed; inset:0; background:rgba(10,10,10,0.55); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;}
+  .modal-box{background:var(--surface); border:1px solid var(--border); max-width:560px; width:100%; max-height:85vh; overflow-y:auto; padding:24px;}
+  .modal-box h2{margin:0 0 4px; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.03em;}
+  .modal-box .sub{margin:0 0 14px;}
+  .modal-box .btn{margin-top:18px;}
+
   .toast{
     position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px);
     background:var(--accent); color:var(--accent-contrast); padding:9px 18px;
@@ -284,7 +290,7 @@
   </div>
 
   <div id="appScreen" style="display:none;">
-    <details class="help" open>
+    <details class="help">
     <summary>How this works</summary>
     <div class="help-body">
       <h4>Status key</h4>
@@ -364,6 +370,21 @@
 </div>
 
 <div class="toast" id="toast">Saved</div>
+
+<div class="modal-overlay" id="statusKeyModal" style="display:none;">
+  <div class="modal-box">
+    <h2>Status key</h2>
+    <p class="sub">What each color means, at a glance.</p>
+    <div class="key-grid">
+      <div class="key-item"><span class="key-swatch" style="background:var(--stInterested)"></span><span class="key-text"><span class="key-label">Interested</span><span class="key-desc">Noted, not vetted/prioritized yet.</span></span></div>
+      <div class="key-item"><span class="key-swatch" style="background:var(--stReady)"></span><span class="key-text"><span class="key-label">Ready to Apply</span><span class="key-desc">Vetted, haven't sent anything yet.</span></span></div>
+      <div class="key-item"><span class="key-swatch" style="background:var(--stApplied)"></span><span class="key-text"><span class="key-label">Applied</span><span class="key-desc">Sent, waiting to hear back.</span></span></div>
+      <div class="key-item"><span class="key-swatch" style="background:var(--stProgress)"></span><span class="key-text"><span class="key-label">In Progress</span><span class="key-desc">They've responded, past the first stage. Good sign.</span></span></div>
+      <div class="key-item"><span class="key-swatch" style="background:var(--stRejected)"></span><span class="key-text"><span class="key-label">Rejected</span><span class="key-desc">Not pursuing.</span></span></div>
+    </div>
+    <button class="btn primary" id="statusKeyModalClose">Got it</button>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1021,6 +1042,7 @@ async function onLoggedIn(user){
   await ensureProfile(user);
   await loadDataFromDb();
   renderAll();
+  document.getElementById("statusKeyModal").style.display = "flex";
 }
 
 function renderAuthMode(){
@@ -1073,6 +1095,12 @@ async function doSignUp(){
 
 function wireAuth(){
   renderAuthMode();
+  document.getElementById("statusKeyModalClose").addEventListener("click", ()=>{
+    document.getElementById("statusKeyModal").style.display = "none";
+  });
+  document.getElementById("statusKeyModal").addEventListener("click", (e)=>{
+    if(e.target.id === "statusKeyModal") document.getElementById("statusKeyModal").style.display = "none";
+  });
   document.getElementById("authToggleMode").addEventListener("click", (e)=>{
     e.preventDefault();
     authMode = authMode === "signup" ? "signin" : "signup";
@@ -1133,6 +1161,7 @@ async function initAuth(){
       currentUser = null;
       currentProfile = null;
       data = [];
+      document.getElementById("statusKeyModal").style.display = "none";
       showAuthScreen();
     }
   });
