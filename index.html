@@ -157,6 +157,13 @@
   .openings-row a:hover{text-decoration:underline;}
   .openings-note{color:var(--text-dim); font-size:0.78rem; width:100%;}
 
+  .other-notes-box{background:var(--surface); border:1px solid var(--border); padding:14px 16px; margin-bottom:16px;}
+  .other-notes-box label{display:block; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); font-weight:700; margin-bottom:8px;}
+  .other-notes-box textarea{
+    width:100%; min-height:70px; background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:8px 10px; font-family:inherit; font-size:0.85rem; line-height:1.4; resize:vertical;
+  }
+
   .empty{text-align:center; color:var(--text-faint); padding:40px 0; font-size:0.9rem; border:1px solid var(--border);}
 
   details.help{background:var(--surface); border:1px solid var(--border); margin-bottom:24px;}
@@ -298,6 +305,11 @@
   </div>
 
   <div id="appScreen" style="display:none;">
+    <div class="other-notes-box">
+      <label for="otherNotes">Other Notes</label>
+      <textarea id="otherNotes" placeholder="Other links or notes to keep handy - e.g. more application portals, job boards, saved searches..."></textarea>
+    </div>
+
     <details class="help">
     <summary>How this works</summary>
     <div class="help-body">
@@ -420,7 +432,7 @@ function itemToRow(item){
 
 const STATUS_OPTIONS = ["Interested","Ready to Apply","Applied","In Progress","Rejected"];
 const CHANNEL_OPTIONS = ["Email","Website"];
-const SPECIALIZATION_OPTIONS = ["Interior","Exhibit","Architecture","Urban","Product","Manufacturing"];
+const SPECIALIZATION_OPTIONS = ["Interior","Exhibit","Architecture","Urban","Product","Manufacturing","Retail"];
 
 const STATUS_COLOR_VAR = {
   "Interested": ["--stInterested","--stInterested-bg"],
@@ -771,6 +783,7 @@ function fieldRow(item, key, label, type){
 
 function specializationRow(item){
   const tags = specList(item);
+  const otherTags = tags.filter(t=>!SPECIALIZATION_OPTIONS.includes(t));
   const boxes = SPECIALIZATION_OPTIONS.map(opt=>{
     const checked = tags.includes(opt) ? "checked" : "";
     return `<label style="display:inline-flex; align-items:center; gap:5px; margin:3px 10px 3px 0; font-size:0.8rem; text-transform:none; font-weight:400;">
@@ -779,6 +792,8 @@ function specializationRow(item){
   }).join("");
   return `<div class="field full"><label>Specialization</label>
     <div class="openings-row" data-spec-group="${item.id}">${boxes}</div>
+    <input type="text" data-spec-other-id="${item.id}" placeholder="Other (comma separated)" value="${escapeHtml(otherTags.join(", "))}"
+      style="margin-top:6px; width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:6px 9px; font-size:0.8rem; font-family:inherit;">
   </div>`;
 }
 
@@ -907,15 +922,22 @@ function renderList(){
       el.addEventListener("blur", handler);
     }
   });
+  const syncSpecialization = async (id)=>{
+    const group = listEl.querySelector(`[data-spec-group="${id}"]`);
+    const checked = [...group.querySelectorAll("input:checked")].map(c=>c.value);
+    const otherInput = listEl.querySelector(`[data-spec-other-id="${id}"]`);
+    const otherTags = otherInput ? otherInput.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
+    await updateField(id, "specialization", [...checked, ...otherTags].join(", "));
+    renderStats();
+    renderList();
+  };
   listEl.querySelectorAll("[data-spec-id]").forEach(el=>{
-    el.addEventListener("change", async ()=>{
-      const id = el.getAttribute("data-spec-id");
-      const group = listEl.querySelector(`[data-spec-group="${id}"]`);
-      const checked = [...group.querySelectorAll("input:checked")].map(c=>c.value);
-      await updateField(id, "specialization", checked.join(", "));
-      renderStats();
-      renderList();
-    });
+    el.addEventListener("change", ()=> syncSpecialization(el.getAttribute("data-spec-id")));
+  });
+  listEl.querySelectorAll("[data-spec-other-id]").forEach(el=>{
+    const handler = ()=> syncSpecialization(el.getAttribute("data-spec-other-id"));
+    el.addEventListener("change", handler);
+    el.addEventListener("blur", handler);
   });
 }
 
@@ -1068,6 +1090,7 @@ async function onLoggedIn(user){
   // closed here so "How this works" behaves the same on every load.
   document.querySelector("details.help").open = false;
   await ensureProfile(user);
+  document.getElementById("otherNotes").value = currentProfile.other_notes || "";
   await loadDataFromDb();
   renderAll();
   document.getElementById("statusKeyModal").style.display = "flex";
@@ -1123,6 +1146,14 @@ async function doSignUp(){
 
 function wireAuth(){
   renderAuthMode();
+  const otherNotesHandler = async ()=>{
+    const val = document.getElementById("otherNotes").value;
+    const { error } = await sb.from("profiles").update({ other_notes: val || null }).eq("id", currentUser.id);
+    if(error){ showToast("Save failed: " + error.message, true); return; }
+    currentProfile.other_notes = val;
+    showToast("Saved");
+  };
+  document.getElementById("otherNotes").addEventListener("blur", otherNotesHandler);
   document.getElementById("statusKeyModalClose").addEventListener("click", ()=>{
     document.getElementById("statusKeyModal").style.display = "none";
   });
@@ -1190,6 +1221,7 @@ async function initAuth(){
       currentProfile = null;
       data = [];
       document.getElementById("statusKeyModal").style.display = "none";
+      document.getElementById("otherNotes").value = "";
       showAuthScreen();
     }
   });

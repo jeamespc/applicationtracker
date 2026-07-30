@@ -45,6 +45,7 @@ const SPECIALIZATION_KEYWORDS: Record<string, RegExp> = {
   Urban: /\burban(ism|\s?planning)?\b|\bmaster\s?plan(ning)?\b/i,
   Product: /\bproduct\s?design\b|\bindustrial\s?design\b/i,
   Manufacturing: /\bmanufactur(e|ing|er)\b|\bfactory\b/i,
+  Retail: /\bretail(er)?\b|\bstore\s?design\b|\bshop(ping)?\s?(fit-?out|design)\b/i,
 };
 
 const corsHeaders = {
