@@ -769,21 +769,16 @@ function fieldRow(item, key, label, type){
   return `<div class="field"><label>${label}</label><input type="text" data-id="${item.id}" data-key="${key}" value="${escapeHtml(val)}"></div>`;
 }
 
-function readOnlyRow(item, key, label, kind){
-  const val = item[key] ?? "";
-  let display = `<span class="ro-value">${escapeHtml(val) || '<span class="openings-note">—</span>'}</span>`;
-  if(kind==="contact" && val.includes("@")) display = `<a class="mailto" href="mailto:${val}">${escapeHtml(val)}</a>`;
-  if(kind==="link" && val) display = `<a class="mailto" href="${escapeHtml(val)}" target="_blank" rel="noopener">${escapeHtml(val)}</a>`;
-  return `<div class="field"><label>${label}</label>${display}</div>`;
-}
-
 function specializationRow(item){
   const tags = specList(item);
-  const chips = tags.length
-    ? tags.map(t=>`<span class="badge" style="color:var(--link);background:var(--surface-2);border:1px solid var(--border)">${escapeHtml(t)}</span>`).join(" ")
-    : `<span class="openings-note">None set</span>`;
+  const boxes = SPECIALIZATION_OPTIONS.map(opt=>{
+    const checked = tags.includes(opt) ? "checked" : "";
+    return `<label style="display:inline-flex; align-items:center; gap:5px; margin:3px 10px 3px 0; font-size:0.8rem; text-transform:none; font-weight:400;">
+      <input type="checkbox" value="${opt}" data-spec-id="${item.id}" ${checked}> ${escapeHtml(opt)}
+    </label>`;
+  }).join("");
   return `<div class="field full"><label>Specialization</label>
-    <div class="openings-row">${chips}</div>
+    <div class="openings-row" data-spec-group="${item.id}">${boxes}</div>
   </div>`;
 }
 
@@ -851,12 +846,12 @@ function renderList(){
       </div>
       <div class="card-body">
         <div class="grid2">
-          ${readOnlyRow(item,"channel","Channel")}
-          ${readOnlyRow(item,"contact","Contact","contact")}
+          ${fieldRow(item,"channel","Channel","select-channel")}
+          ${fieldRow(item,"contact","Contact","contact")}
           ${fieldRow(item,"location","Location")}
-          ${readOnlyRow(item,"teamSize","Team Size")}
-          ${readOnlyRow(item,"discipline","Discipline")}
-          ${readOnlyRow(item,"website","Website","link")}
+          ${fieldRow(item,"teamSize","Team Size")}
+          ${fieldRow(item,"discipline","Discipline")}
+          ${fieldRow(item,"website","Website","link")}
           ${fieldRow(item,"dateApplied","Date Applied","date")}
           ${fieldRow(item,"followUpDate","Follow-up Date","date")}
           ${specializationRow(item)}
@@ -900,6 +895,16 @@ function renderList(){
     if(el.tagName==="INPUT" || el.tagName==="TEXTAREA"){
       el.addEventListener("blur", handler);
     }
+  });
+  listEl.querySelectorAll("[data-spec-id]").forEach(el=>{
+    el.addEventListener("change", async ()=>{
+      const id = el.getAttribute("data-spec-id");
+      const group = listEl.querySelector(`[data-spec-group="${id}"]`);
+      const checked = [...group.querySelectorAll("input:checked")].map(c=>c.value);
+      await updateField(id, "specialization", checked.join(", "));
+      renderStats();
+      renderList();
+    });
   });
 }
 
