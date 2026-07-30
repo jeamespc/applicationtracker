@@ -80,16 +80,16 @@
     transform:scale(1.14);
   }
   .status-node.lit{
-    filter:drop-shadow(0 0 6px var(--stProgress)) brightness(1.25);
+    filter:drop-shadow(0 0 6px var(--glow, var(--stProgress))) brightness(1.25);
     animation:litSquarePulse 2.4s ease-in-out infinite;
   }
   .status-node.lit:hover{
-    filter:drop-shadow(0 0 10px var(--stProgress)) brightness(1.5);
+    filter:drop-shadow(0 0 10px var(--glow, var(--stProgress))) brightness(1.5);
     animation-play-state:paused;
   }
   @keyframes litSquarePulse{
-    0%,100%{ filter:drop-shadow(0 0 6px var(--stProgress)) brightness(1.25); }
-    50%{ filter:drop-shadow(0 0 11px var(--stProgress)) brightness(1.45); }
+    0%,100%{ filter:drop-shadow(0 0 6px var(--glow, var(--stProgress))) brightness(1.25); }
+    50%{ filter:drop-shadow(0 0 11px var(--glow, var(--stProgress))) brightness(1.45); }
   }
   @media(max-width:560px){ .status-node{width:30px; height:30px; flex-basis:30px;} }
   .card-head-main{
@@ -826,7 +826,7 @@ function renderList(){
     <div class="card ${open?'open':''} ${selected?'selected':''}" style="--status-color:var(${statusVars[0]})" data-card="${item.id}">
       <div class="card-head" data-toggle="${item.id}">
         ${selectMode ? `<input type="checkbox" class="select-checkbox" data-select="${item.id}" ${selected?"checked":""} onclick="event.stopPropagation()">` : ""}
-        <span class="status-node${lit?" lit":""}" style="background:var(${statusVars[0]})" title="${escapeHtml(item.status)}${litReason}"></span>
+        <span class="status-node${lit?" lit":""}" style="background:var(${statusVars[0]}); --glow:var(${statusVars[0]})" title="${escapeHtml(item.status)}${litReason}"></span>
         <div class="card-head-main">
           <div class="name-row">
             <span class="name">${escapeHtml(item.studio)}</span>
