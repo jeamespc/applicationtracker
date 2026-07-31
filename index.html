@@ -14,6 +14,7 @@
     --stApplied:#7c8fd6; --stApplied-bg:#1f2340;
     --stProgress:#4dbf78; --stProgress-bg:#1a3322;
     --stRejected:#e0707a; --stRejected-bg:#3a1f23;
+    --favorite:#F5C518;
     --link:#93a4e6;
     --radius: 0;
   }
@@ -127,6 +128,13 @@
   }
   .chev{color:var(--text-faint); transition:transform .15s ease; flex:0 0 auto;}
   .card.open .chev{transform:rotate(90deg);}
+
+  .fav-btn{
+    background:transparent; border:none; cursor:pointer; padding:2px; line-height:1;
+    font-size:1.1rem; color:var(--border); flex:0 0 auto;
+  }
+  .fav-btn:hover{color:var(--favorite);}
+  .fav-btn.is-fav{color:var(--favorite);}
 
   .status-select{
     background:var(--status-bg, var(--surface-2)); border:1px solid var(--border); color:var(--status-color, var(--text));
@@ -448,7 +456,8 @@ const FIELD_MAP = {
   teamSize:"team_size", discipline:"discipline", website:"website", specialization:"specialization",
   whyFits:"why_fits", dateApplied:"date_applied",
   followUpDate:"follow_up_date", responseLog:"response_log",
-  openingsStatus:"openings_status", openingsUrl:"openings_url", openingsNote:"openings_note", openingsChecked:"openings_checked"
+  openingsStatus:"openings_status", openingsUrl:"openings_url", openingsNote:"openings_note", openingsChecked:"openings_checked",
+  favorite:"favorite"
 };
 function rowToItem(row){
   const item = {id: row.id};
@@ -699,7 +708,8 @@ const STAT_DEFS = [
   {id:"ready", label:"Ready to Apply", predicate: d=>d.status==="Ready to Apply"},
   {id:"applied", label:"Applied", predicate: d=>d.status==="Applied"},
   {id:"inprogress", label:"In Progress", predicate: d=>d.status==="In Progress"},
-  {id:"rejected", label:"Rejected", predicate: d=>d.status==="Rejected"}
+  {id:"rejected", label:"Rejected", predicate: d=>d.status==="Rejected"},
+  {id:"favorite", label:"Favorites", predicate: d=>!!d.favorite}
 ];
 let activeStat = null;
 
@@ -896,6 +906,7 @@ function renderList(){
           <select class="status-select" data-id="${item.id}" data-key="status" style="color:var(${statusVars[0]});background-color:var(${statusVars[1]})">
             ${STATUS_OPTIONS.map(o=>`<option value="${o}" ${o===item.status?"selected":""}>${o}</option>`).join("")}
           </select>
+          <button type="button" class="fav-btn${item.favorite?" is-fav":""}" data-fav="${item.id}" title="${item.favorite?"Remove from favorites":"Add to favorites"}">${item.favorite?"&#9733;":"&#9734;"}</button>
           <span class="chev">&#9656;</span>
         </div>
       </div>
@@ -932,6 +943,16 @@ function renderList(){
     el.addEventListener("click", (e)=>{
       e.stopPropagation();
       deleteItem(el.getAttribute("data-delete"));
+    });
+  });
+  listEl.querySelectorAll("[data-fav]").forEach(el=>{
+    el.addEventListener("click", async (e)=>{
+      e.stopPropagation();
+      const id = el.getAttribute("data-fav");
+      const item = data.find(d=>d.id===id);
+      await updateField(id, "favorite", !item.favorite);
+      renderStats();
+      renderList();
     });
   });
   listEl.querySelectorAll("[data-key]").forEach(el=>{
