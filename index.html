@@ -399,7 +399,7 @@
       <button class="btn" id="selectModeBtn">Select</button>
       <button class="btn" id="recheckOpeningsBtn">Recheck openings</button>
       <button class="btn primary" id="addCompanyBtn">+ Add company</button>
-      <button class="btn danger" id="resetBtn">Reset to starter list</button>
+      <button class="btn" id="resetFiltersBtn">Reset filters</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
     </div>
 
@@ -1090,15 +1090,14 @@ function wireToolbar(){
     e.target.value = "";
   });
 
-  document.getElementById("resetBtn").addEventListener("click", async ()=>{
-    if(!confirm("Replace your ENTIRE list with the original 22 Milan studios? This deletes everything currently in your list first.")) return;
-    const ids = data.map(d=>d.id);
-    if(ids.length){
-      const { error } = await sb.from("studios").delete().in("id", ids);
-      if(error){ showToast("Reset failed: " + error.message, true); return; }
-    }
-    data = [];
-    await insertStarterList();
+  document.getElementById("resetFiltersBtn").addEventListener("click", ()=>{
+    document.getElementById("search").value = "";
+    document.getElementById("filterStatus").value = "";
+    document.getElementById("filterChannel").value = "";
+    document.getElementById("filterSpec").value = "";
+    document.getElementById("sortBy").value = "status";
+    activeStat = null;
+    renderAll();
   });
 
   document.getElementById("addCompanyBtn").addEventListener("click", ()=>{
