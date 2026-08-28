@@ -971,9 +971,6 @@ function renderList(){
       }
     };
     el.addEventListener("change", handler);
-    if(el.tagName==="INPUT" || el.tagName==="TEXTAREA"){
-      el.addEventListener("blur", handler);
-    }
   });
   const syncSpecialization = async (id)=>{
     const group = listEl.querySelector(`[data-spec-group="${id}"]`);
@@ -1172,7 +1169,9 @@ async function onLoggedIn(user){
   document.getElementById("otherNotes").value = currentProfile.other_notes || "";
   await loadDataFromDb();
   renderAll();
-  document.getElementById("statusKeyModal").style.display = "flex";
+  if(!localStorage.getItem("hasSeenStatusKey")){
+    document.getElementById("statusKeyModal").style.display = "flex";
+  }
 }
 
 function renderAuthMode(){
@@ -1235,9 +1234,13 @@ function wireAuth(){
   document.getElementById("otherNotes").addEventListener("blur", otherNotesHandler);
   document.getElementById("statusKeyModalClose").addEventListener("click", ()=>{
     document.getElementById("statusKeyModal").style.display = "none";
+    localStorage.setItem("hasSeenStatusKey", "1");
   });
   document.getElementById("statusKeyModal").addEventListener("click", (e)=>{
-    if(e.target.id === "statusKeyModal") document.getElementById("statusKeyModal").style.display = "none";
+    if(e.target.id === "statusKeyModal"){
+      document.getElementById("statusKeyModal").style.display = "none";
+      localStorage.setItem("hasSeenStatusKey", "1");
+    }
   });
   document.getElementById("authToggleMode").addEventListener("click", (e)=>{
     e.preventDefault();
