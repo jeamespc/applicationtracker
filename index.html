@@ -334,6 +334,10 @@
           <div class="field"><label>Last Name</label><input type="text" id="profLastName"></div>
         </div>
         <div class="field"><label>Location</label><input type="text" id="profLocation"></div>
+        <div class="field full"><label>Roles you're looking for</label>
+          <div class="openings-row" id="profRoles"></div>
+          <p class="openings-note">Job-opening checks will only count listings that match one of these roles.</p>
+        </div>
         <div style="display:flex; gap:8px; margin-top:14px;">
           <button class="btn primary" id="profSaveBtn">Save profile</button>
           <button class="btn" id="profCloseBtn">Close</button>
@@ -472,7 +476,7 @@ function itemToRow(item){
 
 const STATUS_OPTIONS = ["Interested","Ready to Apply","Applied","In Progress","Rejected"];
 const CHANNEL_OPTIONS = ["Email","Website"];
-const SPECIALIZATION_OPTIONS = ["Interior","Exhibit","Architecture","Urban","Product","Manufacturing","Retail"];
+const SPECIALIZATION_OPTIONS = ["Interior","Exhibit","Architecture","Urban","Product","Manufacturing","Retail","Fashion","Intern"];
 
 const STATUS_COLOR_VAR = {
   "Interested": ["--stInterested","--stInterested-bg"],
@@ -611,7 +615,7 @@ async function researchStudio(item, opts){
   let ok = false;
   try{
     const { error: fnError } = await sb.functions.invoke("research-company", {
-      body: { studioId: item.id, website: item.website }
+      body: { studioId: item.id, website: item.website, profileRoles: (currentProfile && currentProfile.roles) || "" }
     });
     if(fnError) throw fnError;
     const { data: refreshed } = await sb.from("studios").select("*").eq("id", item.id).maybeSingle();
@@ -1020,7 +1024,14 @@ function renderList(){
 
 function renderAll(){ renderStats(); renderList(); }
 
+function populateProfileRoles(){
+  document.getElementById("profRoles").innerHTML = SPECIALIZATION_OPTIONS.map(opt=>`<label class="spec-chip">
+    <input type="checkbox" value="${opt}" data-prof-role> ${escapeHtml(opt)}
+  </label>`).join("");
+}
+
 function wireToolbar(){
+  populateProfileRoles();
   populateSelect(document.getElementById("filterStatus"), STATUS_OPTIONS, "All statuses");
   populateSelect(document.getElementById("filterChannel"), CHANNEL_OPTIONS, "All channels");
   populateSelect(document.getElementById("filterSpec"), SPECIALIZATION_OPTIONS, "All specializations");
@@ -1270,16 +1281,22 @@ async function openProfileScreen(){
   document.getElementById("profFirstName").value = currentProfile.first_name || "";
   document.getElementById("profLastName").value = currentProfile.last_name || "";
   document.getElementById("profLocation").value = currentProfile.location || "";
+  const checkedRoles = String(currentProfile.roles||"").split(",").map(s=>s.trim()).filter(Boolean);
+  document.querySelectorAll("#profRoles [data-prof-role]").forEach(el=>{
+    el.checked = checkedRoles.includes(el.value);
+  });
   document.getElementById("profMsg").textContent = "";
 }
 
 async function saveProfile(){
   const msg = document.getElementById("profMsg");
   msg.className = "auth-msg"; msg.textContent = "Saving...";
+  const checkedRoles = [...document.querySelectorAll("#profRoles [data-prof-role]:checked")].map(el=>el.value);
   const fields = {
     first_name: document.getElementById("profFirstName").value.trim(),
     last_name: document.getElementById("profLastName").value.trim(),
-    location: document.getElementById("profLocation").value.trim()
+    location: document.getElementById("profLocation").value.trim(),
+    roles: checkedRoles.join(", ")
   };
 
   const { error } = await sb.from("profiles").update(fields).eq("id", currentUser.id);

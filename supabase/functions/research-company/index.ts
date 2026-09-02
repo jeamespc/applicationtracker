@@ -37,7 +37,7 @@ const CAREER_PATHS = ["", "careers", "jobs", "en/careers", "en/jobs", "contact",
 const FETCH_TIMEOUT_MS = 6000;
 
 // Specialization keyword sets, matched against each fetched page's own text -
-// same 6-tag vocabulary the tracker already uses (SPECIALIZATION_OPTIONS in index.html).
+// same tag vocabulary the tracker already uses (SPECIALIZATION_OPTIONS in index.html).
 const SPECIALIZATION_KEYWORDS: Record<string, RegExp> = {
   Architecture: /\barchitect(ure|ural|s)?\b/i,
   Interior: /\binterior(s)?\s?(design)?\b/i,
@@ -46,6 +46,8 @@ const SPECIALIZATION_KEYWORDS: Record<string, RegExp> = {
   Product: /\bproduct\s?design\b|\bindustrial\s?design\b/i,
   Manufacturing: /\bmanufactur(e|ing|er)\b|\bfactory\b/i,
   Retail: /\bretail(er)?\b|\bstore\s?design\b|\bshop(ping)?\s?(fit-?out|design)\b/i,
+  Fashion: /\bfashion\b|\bapparel\b/i,
+  Intern: /\bintern(ship)?s?\b/i,
 };
 
 const corsHeaders = {
@@ -120,6 +122,17 @@ function extractSpecializations(text: string): string {
   return hits.join(", ");
 }
 
+// Gates a page's hiring-signal match against the roles the user set on their
+// profile: an "Open listing"/"Open call" only counts when the same page also
+// mentions one of those roles, so a generic "we're hiring" for an unrelated
+// position (e.g. an accountant) doesn't get flagged for a designer. No roles
+// set on the profile yet means don't gate at all - fall back to the old
+// unfiltered behavior.
+function pageMatchesRoles(text: string, roles: string[]): boolean {
+  if (roles.length === 0) return true;
+  return roles.some((role) => SPECIALIZATION_KEYWORDS[role]?.test(text));
+}
+
 const WORD_TO_NUMBER: Record<string, number> = {
   two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
   duo: 2, trio: 3,
@@ -146,13 +159,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { studioId, website } = await req.json();
+    const { studioId, website, profileRoles } = await req.json();
     if (!studioId || !website) {
       return new Response(JSON.stringify({ error: "studioId and website are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const roleList = typeof profileRoles === "string"
+      ? profileRoles.split(",").map((s) => s.trim()).filter((s) => s in SPECIALIZATION_KEYWORDS)
+      : [];
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabase = createClient(
@@ -205,12 +222,12 @@ Deno.serve(async (req) => {
           specHits.add(tag);
         }
 
-        if (STRONG_LISTING_KEYWORDS.test(html)) {
+        if (STRONG_LISTING_KEYWORDS.test(html) && pageMatchesRoles(text, roleList)) {
           hasStrongSignal = true;
           hitUrl = url;
           break; // strongest possible signal - stop crawling
         }
-        if (WEAK_CALL_KEYWORDS.test(html) && !hasWeakSignal) {
+        if (WEAK_CALL_KEYWORDS.test(html) && pageMatchesRoles(text, roleList) && !hasWeakSignal) {
           hasWeakSignal = true;
           hitUrl = url;
         }
@@ -228,7 +245,9 @@ Deno.serve(async (req) => {
     const updatePayload: Record<string, unknown> = {
       openings_status: openingsStatus,
       openings_url: hitUrl,
-      openings_note: "Auto-checked (keyword match against the site's own pages, no AI analysis).",
+      openings_note: roleList.length
+        ? `Auto-checked for ${roleList.join(", ")} roles (keyword match against the site's own pages, no AI analysis).`
+        : "Auto-checked (keyword match against the site's own pages, no AI analysis).",
       openings_checked: new Date().toISOString().slice(0, 10),
     };
     if (foundEmail) {
