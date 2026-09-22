@@ -1024,14 +1024,55 @@ function renderList(){
 
 function renderAll(){ renderStats(); renderList(); }
 
-function populateProfileRoles(){
-  document.getElementById("profRoles").innerHTML = SPECIALIZATION_OPTIONS.map(opt=>`<label class="spec-chip">
-    <input type="checkbox" value="${opt}" data-prof-role> ${escapeHtml(opt)}
-  </label>`).join("");
+// Mirrors specializationRow()'s fixed-checkboxes + free-text "other" chips
+// pattern, but reads/writes the live DOM directly instead of auto-saving per
+// field - the profile screen only persists on the explicit "Save profile"
+// click, so add/remove just have to preserve whatever's currently typed
+// rather than round-tripping through the database.
+function renderProfileRoles(checkedValues, otherValues){
+  checkedValues = checkedValues || [];
+  otherValues = otherValues || [];
+  const boxes = SPECIALIZATION_OPTIONS.map(opt=>{
+    const checked = checkedValues.includes(opt) ? "checked" : "";
+    return `<label class="spec-chip">
+      <input type="checkbox" value="${opt}" data-prof-role ${checked}> ${escapeHtml(opt)}
+    </label>`;
+  }).join("");
+  const allOther = [...otherValues, ...Array(profExtraRoleSlots).fill("")];
+  const otherChips = allOther.map((t,i)=>`<span class="spec-chip spec-chip-other">
+      <input type="text" class="prof-role-other-input" data-prof-role-other-idx="${i}" value="${escapeHtml(t)}" placeholder="Role">
+      <button type="button" class="spec-chip-remove" data-prof-role-remove-idx="${i}" title="Remove">&times;</button>
+    </span>`).join("");
+  const rolesEl = document.getElementById("profRoles");
+  rolesEl.innerHTML = boxes + otherChips + `<button type="button" class="spec-chip spec-add-btn" id="profRoleAddBtn">+ Add another</button>`;
+
+  const liveState = () => ({
+    checked: [...rolesEl.querySelectorAll("[data-prof-role]:checked")].map(c=>c.value),
+    others: [...rolesEl.querySelectorAll(".prof-role-other-input")].map(i=>i.value)
+  });
+
+  rolesEl.querySelectorAll("[data-prof-role-remove-idx]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const idx = Number(el.getAttribute("data-prof-role-remove-idx"));
+      const { checked, others } = liveState();
+      others.splice(idx,1);
+      profExtraRoleSlots = 0;
+      renderProfileRoles(checked, others);
+    });
+  });
+  document.getElementById("profRoleAddBtn").addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const { checked, others } = liveState();
+    profExtraRoleSlots = 1;
+    renderProfileRoles(checked, others);
+    const inputs = rolesEl.querySelectorAll(".prof-role-other-input");
+    if(inputs.length) inputs[inputs.length-1].focus();
+  });
 }
 
 function wireToolbar(){
-  populateProfileRoles();
+  renderProfileRoles([], []);
   populateSelect(document.getElementById("filterStatus"), STATUS_OPTIONS, "All statuses");
   populateSelect(document.getElementById("filterChannel"), CHANNEL_OPTIONS, "All channels");
   populateSelect(document.getElementById("filterSpec"), SPECIALIZATION_OPTIONS, "All specializations");
@@ -1138,6 +1179,7 @@ function downloadBlob(blob, filename){
 
 let authMode = "signin";
 let currentProfile = null;
+let profExtraRoleSlots = 0;
 
 function showAuthScreen(){
   document.getElementById("authScreen").style.display = "block";
@@ -1281,10 +1323,11 @@ async function openProfileScreen(){
   document.getElementById("profFirstName").value = currentProfile.first_name || "";
   document.getElementById("profLastName").value = currentProfile.last_name || "";
   document.getElementById("profLocation").value = currentProfile.location || "";
-  const checkedRoles = String(currentProfile.roles||"").split(",").map(s=>s.trim()).filter(Boolean);
-  document.querySelectorAll("#profRoles [data-prof-role]").forEach(el=>{
-    el.checked = checkedRoles.includes(el.value);
-  });
+  const savedRoles = String(currentProfile.roles||"").split(",").map(s=>s.trim()).filter(Boolean);
+  const checkedRoles = savedRoles.filter(r=>SPECIALIZATION_OPTIONS.includes(r));
+  const otherRoles = savedRoles.filter(r=>!SPECIALIZATION_OPTIONS.includes(r));
+  profExtraRoleSlots = 0;
+  renderProfileRoles(checkedRoles, otherRoles);
   document.getElementById("profMsg").textContent = "";
 }
 
@@ -1292,16 +1335,19 @@ async function saveProfile(){
   const msg = document.getElementById("profMsg");
   msg.className = "auth-msg"; msg.textContent = "Saving...";
   const checkedRoles = [...document.querySelectorAll("#profRoles [data-prof-role]:checked")].map(el=>el.value);
+  const otherRoles = [...document.querySelectorAll("#profRoles .prof-role-other-input")].map(el=>el.value.trim()).filter(Boolean);
   const fields = {
     first_name: document.getElementById("profFirstName").value.trim(),
     last_name: document.getElementById("profLastName").value.trim(),
     location: document.getElementById("profLocation").value.trim(),
-    roles: checkedRoles.join(", ")
+    roles: [...checkedRoles, ...otherRoles].join(", ")
   };
 
   const { error } = await sb.from("profiles").update(fields).eq("id", currentUser.id);
   if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; return; }
   currentProfile = {...currentProfile, ...fields};
+  profExtraRoleSlots = 0;
+  renderProfileRoles(checkedRoles, otherRoles);
   msg.textContent = "Saved.";
   renderStats(); renderList();
 }

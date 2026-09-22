@@ -122,6 +122,16 @@ function extractSpecializations(text: string): string {
   return hits.join(", ");
 }
 
+// A profile role that isn't one of the fixed SPECIALIZATION_KEYWORDS tags
+// (i.e. a custom "+ Add another" role typed on the profile) gets a literal,
+// word-boundary, case-insensitive match on its own text instead - the best
+// a keyword-matching script can do for free text it has no vocabulary for.
+function keywordRegexForRole(role: string): RegExp {
+  if (SPECIALIZATION_KEYWORDS[role]) return SPECIALIZATION_KEYWORDS[role];
+  const escaped = role.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b${escaped}\\b`, "i");
+}
+
 // Gates a page's hiring-signal match against the roles the user set on their
 // profile: an "Open listing"/"Open call" only counts when the same page also
 // mentions one of those roles, so a generic "we're hiring" for an unrelated
@@ -130,7 +140,7 @@ function extractSpecializations(text: string): string {
 // unfiltered behavior.
 function pageMatchesRoles(text: string, roles: string[]): boolean {
   if (roles.length === 0) return true;
-  return roles.some((role) => SPECIALIZATION_KEYWORDS[role]?.test(text));
+  return roles.some((role) => keywordRegexForRole(role).test(text));
 }
 
 const WORD_TO_NUMBER: Record<string, number> = {
@@ -168,7 +178,7 @@ Deno.serve(async (req) => {
     }
 
     const roleList = typeof profileRoles === "string"
-      ? profileRoles.split(",").map((s) => s.trim()).filter((s) => s in SPECIALIZATION_KEYWORDS)
+      ? profileRoles.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
     const authHeader = req.headers.get("Authorization") ?? "";
