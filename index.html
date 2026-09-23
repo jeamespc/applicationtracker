@@ -192,13 +192,14 @@
   .prof-role-new-input::placeholder{color:var(--text-dim);}
   .prof-role-text{cursor:pointer; flex:1;}
   .prof-role-text:hover{text-decoration:underline;}
+  .prof-level-text{flex:1;}
   #profRoles .prof-role-edit-input{
     background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--text);
     padding:0 0 1px; font-size:0.8rem; font-family:inherit; flex:1; width:auto;
   }
-  #profRoles{flex-direction:column; align-items:stretch; margin-top:0.8em;}
-  #profRoles .prof-role-chip{width:100%; box-sizing:border-box;}
-  #profRoles .prof-role-chip input[type="checkbox"]{
+  #profRoles, #profLevels{flex-direction:column; align-items:stretch; margin-top:0.8em;}
+  #profRoles .prof-role-chip, #profLevels .prof-role-chip{width:100%; box-sizing:border-box;}
+  #profRoles .prof-role-chip input[type="checkbox"], #profLevels .prof-role-chip input[type="checkbox"]{
     width:auto; flex:0 0 auto; padding:0; background:none; border:none;
   }
   .spec-add-btn:hover{color:var(--text); border-color:var(--text-dim);}
@@ -354,6 +355,10 @@
           <div class="openings-row" id="profRoles"></div>
           <p class="openings-note">Type a role and press Enter to add it, click its name to rename it, or use &times; to remove it. Only ticked roles are used in job-opening checks - untick one to leave it out of the search without deleting it.</p>
         </div>
+        <div class="field full"><label>Experience level</label>
+          <div class="openings-row" id="profLevels"></div>
+          <p class="openings-note">Ticking a level restricts job-opening checks to that level - e.g. ticking Internship rules out listings that read as Senior.</p>
+        </div>
         <div style="display:flex; gap:8px; margin-top:14px;">
           <button class="btn primary" id="profSaveBtn">Save profile</button>
           <button class="btn" id="profCloseBtn">Close</button>
@@ -492,7 +497,8 @@ function itemToRow(item){
 
 const STATUS_OPTIONS = ["Interested","Ready to Apply","Applied","In Progress","Rejected"];
 const CHANNEL_OPTIONS = ["Email","Website"];
-const SPECIALIZATION_OPTIONS = ["Interior","Exhibit","Architecture","Urban","Product","Manufacturing","Retail","Fashion","Intern"];
+const SPECIALIZATION_OPTIONS = ["Interior","Exhibit","Architecture","Urban","Product","Manufacturing","Retail","Fashion"];
+const EXPERIENCE_LEVEL_OPTIONS = ["Internship","Junior","Mid-Level","Senior"];
 
 const STATUS_COLOR_VAR = {
   "Interested": ["--stInterested","--stInterested-bg"],
@@ -631,7 +637,12 @@ async function researchStudio(item, opts){
   let ok = false;
   try{
     const { error: fnError } = await sb.functions.invoke("research-company", {
-      body: { studioId: item.id, website: item.website, profileRoles: (currentProfile && currentProfile.roles) || "" }
+      body: {
+        studioId: item.id,
+        website: item.website,
+        profileRoles: (currentProfile && currentProfile.roles) || "",
+        experienceLevels: (currentProfile && currentProfile.experience_levels) || ""
+      }
     });
     if(fnError) throw fnError;
     const { data: refreshed } = await sb.from("studios").select("*").eq("id", item.id).maybeSingle();
@@ -1116,8 +1127,28 @@ function renderProfileRoles(){
   });
 }
 
+// Experience level is a fixed, closed vocabulary (unlike roles) - just
+// checkboxes, no add/remove/rename. profLevelsDraft holds the checked subset
+// of EXPERIENCE_LEVEL_OPTIONS while the profile screen is open.
+let profLevelsDraft = [];
+
+function renderProfileLevels(){
+  const levelsEl = document.getElementById("profLevels");
+  levelsEl.innerHTML = EXPERIENCE_LEVEL_OPTIONS.map(opt=>`<span class="spec-chip prof-role-chip">
+      <input type="checkbox" value="${escapeHtml(opt)}" data-level-check ${profLevelsDraft.includes(opt) ? "checked" : ""}>
+      <span class="prof-level-text">${escapeHtml(opt)}</span>
+    </span>`).join("");
+
+  levelsEl.querySelectorAll("[data-level-check]").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      profLevelsDraft = [...levelsEl.querySelectorAll("[data-level-check]:checked")].map(c=>c.value);
+    });
+  });
+}
+
 function wireToolbar(){
   renderProfileRoles();
+  renderProfileLevels();
   populateSelect(document.getElementById("filterStatus"), STATUS_OPTIONS, "All statuses");
   populateSelect(document.getElementById("filterChannel"), CHANNEL_OPTIONS, "All channels");
   populateSelect(document.getElementById("filterSpec"), SPECIALIZATION_OPTIONS, "All specializations");
@@ -1371,6 +1402,8 @@ async function openProfileScreen(){
   const activeRoles = new Set(String(currentProfile.roles||"").split(",").map(s=>s.trim()).filter(Boolean));
   profRolesDraft = allRoles.map(name=>({name, checked: activeRoles.has(name)}));
   renderProfileRoles();
+  profLevelsDraft = String(currentProfile.experience_levels||"").split(",").map(s=>s.trim()).filter(Boolean);
+  renderProfileLevels();
   document.getElementById("profMsg").textContent = "";
 }
 
@@ -1382,7 +1415,8 @@ async function saveProfile(){
     last_name: document.getElementById("profLastName").value.trim(),
     location: document.getElementById("profLocation").value.trim(),
     role_options: profRolesDraft.map(r=>r.name).join(", "),
-    roles: profRolesDraft.filter(r=>r.checked).map(r=>r.name).join(", ")
+    roles: profRolesDraft.filter(r=>r.checked).map(r=>r.name).join(", "),
+    experience_levels: profLevelsDraft.join(", ")
   };
 
   const { error } = await sb.from("profiles").update(fields).eq("id", currentUser.id);

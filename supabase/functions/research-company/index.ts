@@ -37,7 +37,10 @@ const CAREER_PATHS = ["", "careers", "jobs", "en/careers", "en/jobs", "contact",
 const FETCH_TIMEOUT_MS = 6000;
 
 // Specialization keyword sets, matched against each fetched page's own text -
-// same tag vocabulary the tracker already uses (SPECIALIZATION_OPTIONS in index.html).
+// used to auto-detect a STUDIO's own specialty (extractSpecializations
+// below). "Intern" deliberately isn't here - internship-ness is an
+// experience level, not something a studio "specializes" in; that's now its
+// own EXPERIENCE_LEVEL_KEYWORDS concept further down.
 const SPECIALIZATION_KEYWORDS: Record<string, RegExp> = {
   Architecture: /\barchitect(ure|ural|s)?\b/i,
   Interior: /\binterior(s)?\s?(design)?\b/i,
@@ -47,7 +50,81 @@ const SPECIALIZATION_KEYWORDS: Record<string, RegExp> = {
   Manufacturing: /\bmanufactur(e|ing|er)\b|\bfactory\b/i,
   Retail: /\bretail(er)?\b|\bstore\s?design\b|\bshop(ping)?\s?(fit-?out|design)\b/i,
   Fashion: /\bfashion\b|\bapparel\b/i,
-  Intern: /\bintern(ship)?s?\b/i,
+};
+
+// Synonym clusters for DESIGN roles only - deliberately not a general-purpose
+// synonym engine. Each cluster lists every phrasing a user might type as
+// their own profile role (aliases, matched case-insensitively as a whole
+// role name) plus the regex of equivalent language a studio's own page
+// might use for that same discipline, so "Spatial Design" also catches a
+// studio calling it "Environmental Design" or "Experiential Design" instead.
+// A role that doesn't match any cluster (e.g. a non-design role, or an
+// experience level like "Intern") gets no synonym expansion - see
+// keywordRegexForRole()'s literal fallback.
+const DESIGN_SYNONYM_CLUSTERS: { aliases: string[]; pattern: RegExp }[] = [
+  {
+    aliases: ["architecture", "architect", "architectural design"],
+    pattern: /\barchitect(ure|ural|s)?\b/i,
+  },
+  {
+    aliases: ["interior design", "interior designer", "interior"],
+    pattern: /\binterior(s)?\s?(design(er)?)?\b/i,
+  },
+  {
+    aliases: ["exhibit", "exhibition design", "exhibition", "installation design", "scenography", "scenographic design"],
+    pattern: /\bexhibit(ion)?s?\b|\bscenograph(y|ic)?\b|\binstallation\s?design\b/i,
+  },
+  {
+    aliases: ["urban design", "urban planning", "urbanism", "urban"],
+    pattern: /\burban(ism|\s?planning)?\b|\bmaster\s?plan(ning)?\b/i,
+  },
+  {
+    aliases: ["product design", "product designer", "industrial design"],
+    pattern: /\bproduct\s?design\b|\bindustrial\s?design\b/i,
+  },
+  {
+    aliases: ["manufacturing", "manufacturing design"],
+    pattern: /\bmanufactur(e|ing|er)\b|\bfactory\b/i,
+  },
+  {
+    aliases: ["retail design", "retail", "store design", "shop design", "shopfitting"],
+    pattern: /\bretail(er)?\b|\bstore\s?design\b|\bshop(ping)?\s?(fit-?out|design)\b/i,
+  },
+  {
+    aliases: ["fashion design", "fashion", "apparel design"],
+    pattern: /\bfashion\b|\bapparel\b/i,
+  },
+  {
+    aliases: ["spatial design", "spatial designer", "environmental design", "experiential design", "experience design", "immersive design"],
+    pattern: /\bspatial\s?design\b|\benvironmental\s?design\b|\bexperiential\s?design\b|\bexperience\s?design\b|\bimmersive\s?design\b/i,
+  },
+  {
+    aliases: ["graphic design", "graphic designer", "visual design", "visual communication"],
+    pattern: /\bgraphic\s?design\b|\bvisual\s?(design|communication)\b/i,
+  },
+  {
+    aliases: ["landscape design", "landscape architecture", "landscape"],
+    pattern: /\blandscape\s?(design|architect(ure)?)?\b/i,
+  },
+  {
+    aliases: ["lighting design", "lighting designer"],
+    pattern: /\blighting\s?design\b/i,
+  },
+  {
+    aliases: ["furniture design", "furniture designer"],
+    pattern: /\bfurniture\s?design\b/i,
+  },
+];
+
+// Experience-level keyword sets, ranked low-to-high seniority. Unlike roles,
+// this is a fixed, closed vocabulary (EXPERIENCE_LEVEL_OPTIONS in index.html)
+// - no free text, no synonym expansion needed beyond what's listed here.
+const EXPERIENCE_LEVEL_RANK: Record<string, number> = { Internship: 0, Junior: 1, "Mid-Level": 2, Senior: 3 };
+const EXPERIENCE_LEVEL_KEYWORDS: Record<string, RegExp> = {
+  Internship: /\bintern(ship)?s?\b|\btrainee\b|\bstage\b|\bstagista\b|\bgraduate\s?(scheme|program(me)?)?\b/i,
+  Junior: /\bjunior\b|\bentry[\s-]level\b|\b0[\s-]?(to|-)\s?2\s*years?\b/i,
+  "Mid-Level": /\bmid[\s-]level\b|\bintermediate\b|\b2[\s-]?(to|-)\s?5\s*years?\b/i,
+  Senior: /\bsenior\b|\blead\b|\bhead\s+of\b|\bdirector\b|\bprincipal\b|\b5\+\s*years?\b/i,
 };
 
 const corsHeaders = {
@@ -122,12 +199,16 @@ function extractSpecializations(text: string): string {
   return hits.join(", ");
 }
 
-// A profile role that isn't one of the fixed SPECIALIZATION_KEYWORDS tags
-// (i.e. a custom "+ Add another" role typed on the profile) gets a literal,
-// word-boundary, case-insensitive match on its own text instead - the best
-// a keyword-matching script can do for free text it has no vocabulary for.
+// A profile role gets synonym expansion only when it's recognized as a
+// DESIGN role (an exact, case-insensitive match against a DESIGN_SYNONYM_
+// CLUSTERS alias). Anything else - a non-design role, or text that isn't a
+// known design term - falls back to a literal, word-boundary match on its
+// own text, same as before: the best a keyword-matching script can do for
+// free text it has no vocabulary for.
 function keywordRegexForRole(role: string): RegExp {
-  if (SPECIALIZATION_KEYWORDS[role]) return SPECIALIZATION_KEYWORDS[role];
+  const norm = role.trim().toLowerCase();
+  const cluster = DESIGN_SYNONYM_CLUSTERS.find((c) => c.aliases.includes(norm));
+  if (cluster) return cluster.pattern;
   const escaped = role.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`\\b${escaped}\\b`, "i");
 }
@@ -141,6 +222,21 @@ function keywordRegexForRole(role: string): RegExp {
 function pageMatchesRoles(text: string, roles: string[]): boolean {
   if (roles.length === 0) return true;
   return roles.some((role) => keywordRegexForRole(role).test(text));
+}
+
+// Gates a page against the experience level(s) the user picked: excludes it
+// only when the page signals a level ranked ABOVE every level the user
+// wants - e.g. wanting only "Internship" excludes a page that says "Senior
+// Architect", but a page with no level language at all (a generic "we're
+// hiring") still passes, since that absence isn't evidence it's the wrong
+// level. No levels selected means don't gate at all.
+function pageMatchesExperienceLevels(text: string, levels: string[]): boolean {
+  if (levels.length === 0) return true;
+  const wantedMax = Math.max(...levels.map((l) => EXPERIENCE_LEVEL_RANK[l] ?? 0));
+  for (const [level, re] of Object.entries(EXPERIENCE_LEVEL_KEYWORDS)) {
+    if (EXPERIENCE_LEVEL_RANK[level] > wantedMax && re.test(text)) return false;
+  }
+  return true;
 }
 
 const WORD_TO_NUMBER: Record<string, number> = {
@@ -169,7 +265,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { studioId, website, profileRoles } = await req.json();
+    const { studioId, website, profileRoles, experienceLevels } = await req.json();
     if (!studioId || !website) {
       return new Response(JSON.stringify({ error: "studioId and website are required" }), {
         status: 400,
@@ -179,6 +275,9 @@ Deno.serve(async (req) => {
 
     const roleList = typeof profileRoles === "string"
       ? profileRoles.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    const levelList = typeof experienceLevels === "string"
+      ? experienceLevels.split(",").map((s) => s.trim()).filter((s) => s in EXPERIENCE_LEVEL_RANK)
       : [];
 
     const authHeader = req.headers.get("Authorization") ?? "";
@@ -232,12 +331,14 @@ Deno.serve(async (req) => {
           specHits.add(tag);
         }
 
-        if (STRONG_LISTING_KEYWORDS.test(html) && pageMatchesRoles(text, roleList)) {
+        const roleOk = pageMatchesRoles(text, roleList);
+        const levelOk = pageMatchesExperienceLevels(text, levelList);
+        if (STRONG_LISTING_KEYWORDS.test(html) && roleOk && levelOk) {
           hasStrongSignal = true;
           hitUrl = url;
           break; // strongest possible signal - stop crawling
         }
-        if (WEAK_CALL_KEYWORDS.test(html) && pageMatchesRoles(text, roleList) && !hasWeakSignal) {
+        if (WEAK_CALL_KEYWORDS.test(html) && roleOk && levelOk && !hasWeakSignal) {
           hasWeakSignal = true;
           hitUrl = url;
         }
@@ -252,11 +353,15 @@ Deno.serve(async (req) => {
     else if (checkedAnyPage) openingsStatus = "Nothing posted";
     else openingsStatus = "Uncertain";
 
+    const filterBits = [
+      roleList.length ? `${roleList.join(", ")} roles` : null,
+      levelList.length ? `${levelList.join(", ")} level` : null,
+    ].filter(Boolean);
     const updatePayload: Record<string, unknown> = {
       openings_status: openingsStatus,
       openings_url: hitUrl,
-      openings_note: roleList.length
-        ? `Auto-checked for ${roleList.join(", ")} roles (keyword match against the site's own pages, no AI analysis).`
+      openings_note: filterBits.length
+        ? `Auto-checked for ${filterBits.join(", ")} (keyword match against the site's own pages, no AI analysis).`
         : "Auto-checked (keyword match against the site's own pages, no AI analysis).",
       openings_checked: new Date().toISOString().slice(0, 10),
     };
