@@ -185,6 +185,22 @@
     background:transparent; border:1px dashed var(--border); color:var(--text-dim);
     cursor:pointer; padding:3px 9px; font-size:0.78rem; font-family:inherit;
   }
+  #profRoles .prof-role-new-input{
+    background:transparent; border:1px dashed var(--border); color:var(--text);
+    padding:3px 9px; font-size:0.8rem; font-family:inherit; width:100%; box-sizing:border-box;
+  }
+  .prof-role-new-input::placeholder{color:var(--text-dim);}
+  .prof-role-text{cursor:pointer; flex:1;}
+  .prof-role-text:hover{text-decoration:underline;}
+  #profRoles .prof-role-edit-input{
+    background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--text);
+    padding:0 0 1px; font-size:0.8rem; font-family:inherit; flex:1; width:auto;
+  }
+  #profRoles{flex-direction:column; align-items:stretch;}
+  #profRoles .prof-role-chip{width:100%; box-sizing:border-box;}
+  #profRoles .prof-role-chip input[type="checkbox"]{
+    width:auto; flex:0 0 auto; padding:0; background:none; border:none;
+  }
   .spec-add-btn:hover{color:var(--text); border-color:var(--text-dim);}
 
   .openings-status-select{
@@ -336,7 +352,7 @@
         <div class="field"><label>Location</label><input type="text" id="profLocation"></div>
         <div class="field full"><label>Roles you're looking for</label>
           <div class="openings-row" id="profRoles"></div>
-          <p class="openings-note">Job-opening checks will only count listings that match one of these roles.</p>
+          <p class="openings-note">Type a role and press Enter to add it, click its name to rename it, or use &times; to remove it. Only ticked roles are used in job-opening checks - untick one to leave it out of the search without deleting it.</p>
         </div>
         <div style="display:flex; gap:8px; margin-top:14px;">
           <button class="btn primary" id="profSaveBtn">Save profile</button>
@@ -1024,55 +1040,84 @@ function renderList(){
 
 function renderAll(){ renderStats(); renderList(); }
 
-// Mirrors specializationRow()'s fixed-checkboxes + free-text "other" chips
-// pattern, but reads/writes the live DOM directly instead of auto-saving per
-// field - the profile screen only persists on the explicit "Save profile"
-// click, so add/remove just have to preserve whatever's currently typed
-// rather than round-tripping through the database.
-function renderProfileRoles(checkedValues, otherValues){
-  checkedValues = checkedValues || [];
-  otherValues = otherValues || [];
-  const boxes = SPECIALIZATION_OPTIONS.map(opt=>{
-    const checked = checkedValues.includes(opt) ? "checked" : "";
-    return `<label class="spec-chip">
-      <input type="checkbox" value="${opt}" data-prof-role ${checked}> ${escapeHtml(opt)}
-    </label>`;
-  }).join("");
-  const allOther = [...otherValues, ...Array(profExtraRoleSlots).fill("")];
-  const otherChips = allOther.map((t,i)=>`<span class="spec-chip spec-chip-other">
-      <input type="text" class="prof-role-other-input" data-prof-role-other-idx="${i}" value="${escapeHtml(t)}" placeholder="Role">
-      <button type="button" class="spec-chip-remove" data-prof-role-remove-idx="${i}" title="Remove">&times;</button>
-    </span>`).join("");
+// No default roles - the list is entirely whatever the user has typed in.
+// profRolesDraft holds the working copy while the profile screen is open
+// (edited in place by add/remove/rename/check, only written to the DB on
+// Save) as [{name, checked}, ...] - "checked" is what actually goes into the
+// openings search (profile.roles); the full array, checked or not, is the
+// user's own saved list of roles so unchecking one to skip it in a search
+// doesn't erase it (profile.role_options).
+let profRolesDraft = [];
+
+function renderProfileRoles(){
   const rolesEl = document.getElementById("profRoles");
-  rolesEl.innerHTML = boxes + otherChips + `<button type="button" class="spec-chip spec-add-btn" id="profRoleAddBtn">+ Add another</button>`;
+  const chips = profRolesDraft.map((role, i)=>`<span class="spec-chip prof-role-chip">
+      <input type="checkbox" data-role-check-idx="${i}" ${role.checked ? "checked" : ""}>
+      <span class="prof-role-text" data-role-idx="${i}" title="Click to rename">${escapeHtml(role.name)}</span>
+      <button type="button" class="spec-chip-remove" data-role-remove-idx="${i}" title="Remove">&times;</button>
+    </span>`).join("");
+  rolesEl.innerHTML = chips +
+    `<input type="text" class="prof-role-new-input" id="profRoleNewInput" placeholder="+ Add a role">`;
 
-  const liveState = () => ({
-    checked: [...rolesEl.querySelectorAll("[data-prof-role]:checked")].map(c=>c.value),
-    others: [...rolesEl.querySelectorAll(".prof-role-other-input")].map(i=>i.value)
-  });
-
-  rolesEl.querySelectorAll("[data-prof-role-remove-idx]").forEach(el=>{
-    el.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      const idx = Number(el.getAttribute("data-prof-role-remove-idx"));
-      const { checked, others } = liveState();
-      others.splice(idx,1);
-      profExtraRoleSlots = 0;
-      renderProfileRoles(checked, others);
+  rolesEl.querySelectorAll("[data-role-check-idx]").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const idx = Number(el.getAttribute("data-role-check-idx"));
+      profRolesDraft[idx].checked = el.checked;
     });
   });
-  document.getElementById("profRoleAddBtn").addEventListener("click", (e)=>{
-    e.stopPropagation();
-    const { checked, others } = liveState();
-    profExtraRoleSlots = 1;
-    renderProfileRoles(checked, others);
-    const inputs = rolesEl.querySelectorAll(".prof-role-other-input");
-    if(inputs.length) inputs[inputs.length-1].focus();
+
+  rolesEl.querySelectorAll(".prof-role-text").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const idx = Number(el.getAttribute("data-role-idx"));
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "prof-role-edit-input";
+      input.value = profRolesDraft[idx].name;
+      el.replaceWith(input);
+      input.focus();
+      input.select();
+      let settled = false;
+      const commit = ()=>{
+        if(settled) return;
+        settled = true;
+        const val = input.value.trim();
+        if(val) profRolesDraft[idx].name = val;
+        else profRolesDraft.splice(idx,1);
+        renderProfileRoles();
+      };
+      input.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter"){ e.preventDefault(); commit(); }
+        else if(e.key === "Escape"){ settled = true; renderProfileRoles(); }
+      });
+      input.addEventListener("blur", commit);
+    });
+  });
+
+  rolesEl.querySelectorAll("[data-role-remove-idx]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const idx = Number(el.getAttribute("data-role-remove-idx"));
+      profRolesDraft.splice(idx,1);
+      renderProfileRoles();
+    });
+  });
+
+  const newInput = document.getElementById("profRoleNewInput");
+  newInput.addEventListener("keydown", (e)=>{
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    const val = newInput.value.trim();
+    newInput.value = "";
+    if(!val) return;
+    if(profRolesDraft.some(r=>r.name.toLowerCase() === val.toLowerCase())) return;
+    profRolesDraft.push({name: val, checked: true});
+    renderProfileRoles();
+    document.getElementById("profRoleNewInput").focus();
   });
 }
 
 function wireToolbar(){
-  renderProfileRoles([], []);
+  renderProfileRoles();
   populateSelect(document.getElementById("filterStatus"), STATUS_OPTIONS, "All statuses");
   populateSelect(document.getElementById("filterChannel"), CHANNEL_OPTIONS, "All channels");
   populateSelect(document.getElementById("filterSpec"), SPECIALIZATION_OPTIONS, "All specializations");
@@ -1179,7 +1224,6 @@ function downloadBlob(blob, filename){
 
 let authMode = "signin";
 let currentProfile = null;
-let profExtraRoleSlots = 0;
 
 function showAuthScreen(){
   document.getElementById("authScreen").style.display = "block";
@@ -1323,31 +1367,27 @@ async function openProfileScreen(){
   document.getElementById("profFirstName").value = currentProfile.first_name || "";
   document.getElementById("profLastName").value = currentProfile.last_name || "";
   document.getElementById("profLocation").value = currentProfile.location || "";
-  const savedRoles = String(currentProfile.roles||"").split(",").map(s=>s.trim()).filter(Boolean);
-  const checkedRoles = savedRoles.filter(r=>SPECIALIZATION_OPTIONS.includes(r));
-  const otherRoles = savedRoles.filter(r=>!SPECIALIZATION_OPTIONS.includes(r));
-  profExtraRoleSlots = 0;
-  renderProfileRoles(checkedRoles, otherRoles);
+  const allRoles = String(currentProfile.role_options||"").split(",").map(s=>s.trim()).filter(Boolean);
+  const activeRoles = new Set(String(currentProfile.roles||"").split(",").map(s=>s.trim()).filter(Boolean));
+  profRolesDraft = allRoles.map(name=>({name, checked: activeRoles.has(name)}));
+  renderProfileRoles();
   document.getElementById("profMsg").textContent = "";
 }
 
 async function saveProfile(){
   const msg = document.getElementById("profMsg");
   msg.className = "auth-msg"; msg.textContent = "Saving...";
-  const checkedRoles = [...document.querySelectorAll("#profRoles [data-prof-role]:checked")].map(el=>el.value);
-  const otherRoles = [...document.querySelectorAll("#profRoles .prof-role-other-input")].map(el=>el.value.trim()).filter(Boolean);
   const fields = {
     first_name: document.getElementById("profFirstName").value.trim(),
     last_name: document.getElementById("profLastName").value.trim(),
     location: document.getElementById("profLocation").value.trim(),
-    roles: [...checkedRoles, ...otherRoles].join(", ")
+    role_options: profRolesDraft.map(r=>r.name).join(", "),
+    roles: profRolesDraft.filter(r=>r.checked).map(r=>r.name).join(", ")
   };
 
   const { error } = await sb.from("profiles").update(fields).eq("id", currentUser.id);
   if(error){ msg.className = "auth-msg error"; msg.textContent = error.message; return; }
   currentProfile = {...currentProfile, ...fields};
-  profExtraRoleSlots = 0;
-  renderProfileRoles(checkedRoles, otherRoles);
   msg.textContent = "Saved.";
   renderStats(); renderList();
 }
