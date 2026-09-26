@@ -250,6 +250,25 @@
     opacity:0; transition:opacity .2s ease, transform .2s ease; pointer-events:none;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* Progress strip pinned to the bottom of the screen while openings are being
+     searched (see startSearchProgress()). The toast rides above it. */
+  .search-progress{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    background:var(--surface); border-top:1px solid var(--border);
+    padding:10px 20px 12px;
+    transform:translateY(100%); transition:transform .25s ease; pointer-events:none;
+  }
+  .search-progress.show{transform:translateY(0);}
+  .search-progress-row{
+    display:flex; justify-content:space-between; gap:16px; margin-bottom:8px;
+    font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .search-progress-label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .search-progress-count{color:var(--text-dim); white-space:nowrap; flex:0 0 auto;}
+  .search-progress-track{height:6px; background:var(--surface-2); border:1px solid var(--border);}
+  .search-progress-fill{height:100%; width:0; background:var(--accent);}
+  body.searching .toast{bottom:78px;}
   #importFile{display:none;}
 
   .auth-wrap{display:flex; justify-content:center; padding:60px 20px;}
@@ -454,6 +473,16 @@
 </div>
 
 <div class="toast" id="toast">Saved</div>
+
+<div class="search-progress" id="searchProgress" aria-hidden="true">
+  <div class="search-progress-row">
+    <span class="search-progress-label" id="searchProgressLabel"></span>
+    <span class="search-progress-count" id="searchProgressCount"></span>
+  </div>
+  <div class="search-progress-track" role="progressbar" aria-label="Opening search progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="searchProgressTrack">
+    <div class="search-progress-fill" id="searchProgressFill"></div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="statusKeyModal" style="display:none;">
   <div class="modal-box">
@@ -660,6 +689,67 @@ async function researchStudio(item, opts){
   return ok;
 }
 
+// ---- Search progress strip ----
+// Studios are checked one after another, so "done" is a true count. A single
+// check takes a while though, so the bar also creeps toward (never reaching)
+// the next step while the current studio is in flight - that way it visibly
+// keeps moving instead of sitting still between whole steps.
+const searchProgress = { active:false, total:0, done:0, name:"", stepStart:0, raf:0 };
+
+function paintSearchProgress(){
+  const sp = searchProgress;
+  if(!sp.active) return;
+  const inFlight = sp.done < sp.total ? 0.9 * (1 - Math.exp(-(performance.now() - sp.stepStart) / 6000)) : 0;
+  const pct = Math.min(100, ((sp.done + inFlight) / sp.total) * 100);
+  document.getElementById("searchProgressFill").style.width = pct.toFixed(1) + "%";
+  document.getElementById("searchProgressTrack").setAttribute("aria-valuenow", String(Math.round(pct)));
+  sp.raf = requestAnimationFrame(paintSearchProgress);
+}
+function setSearchProgressText(){
+  const sp = searchProgress;
+  const left = sp.total - sp.done;
+  document.getElementById("searchProgressLabel").textContent =
+    sp.done < sp.total ? `Checking openings · ${sp.name}` : "Search complete";
+  document.getElementById("searchProgressCount").textContent =
+    sp.done < sp.total ? `${sp.done} of ${sp.total} done · ${left} left` : `${sp.total} of ${sp.total} done`;
+}
+function startSearchProgress(total){
+  const sp = searchProgress;
+  if(sp.active) return false;              // one search at a time
+  Object.assign(sp, { active:true, total, done:0, name:"", stepStart:performance.now() });
+  const el = document.getElementById("searchProgress");
+  el.classList.add("show"); el.setAttribute("aria-hidden", "false");
+  document.body.classList.add("searching");
+  document.getElementById("searchProgressFill").style.width = "0%";
+  sp.raf = requestAnimationFrame(paintSearchProgress);
+  return true;
+}
+function beginSearchStep(name){
+  searchProgress.name = name;
+  searchProgress.stepStart = performance.now();
+  setSearchProgressText();
+}
+function finishSearchStep(){
+  searchProgress.done++;
+  setSearchProgressText();
+}
+function endSearchProgress(){
+  const sp = searchProgress;
+  if(!sp.active) return;
+  sp.done = sp.total;
+  setSearchProgressText();
+  document.getElementById("searchProgressFill").style.width = "100%";
+  document.getElementById("searchProgressTrack").setAttribute("aria-valuenow", "100");
+  cancelAnimationFrame(sp.raf);
+  sp.active = false;
+  setTimeout(()=>{
+    if(sp.active) return;                  // a new search already started
+    const el = document.getElementById("searchProgress");
+    el.classList.remove("show"); el.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("searching");
+  }, 1200);
+}
+
 async function addCompany(studio, website){
   const row = { studio, website: website || null, status: "Interested" };
   const { data: inserted, error } = await sb.from("studios").insert([row]).select();
@@ -667,19 +757,32 @@ async function addCompany(studio, website){
   const newItem = rowToItem(inserted[0]);
   data.push(newItem);
   renderAll();
-  await researchStudio(newItem);
+  const tracked = newItem.website && startSearchProgress(1);
+  try{
+    if(tracked) beginSearchStep(newItem.studio);
+    await researchStudio(newItem);
+    if(tracked) finishSearchStep();
+  } finally {
+    if(tracked) endSearchProgress();
+  }
   renderAll();
 }
 
 async function recheckAllOpenings(){
   const targets = data.filter(d=>d.website);
   if(targets.length === 0){ showToast("No studios with a website to check.", true); return; }
-  showToast(`Rechecking ${targets.length} studio${targets.length===1?"":"s"}…`);
+  if(!startSearchProgress(targets.length)){ showToast("A search is already running.", true); return; }
   let successCount = 0;
-  for(const item of targets){
-    const ok = await researchStudio(item, {silent:true});
-    if(ok) successCount++;
-    renderAll();
+  try{
+    for(const item of targets){
+      beginSearchStep(item.studio);
+      const ok = await researchStudio(item, {silent:true});
+      if(ok) successCount++;
+      finishSearchStep();
+      renderAll();
+    }
+  } finally {
+    endSearchProgress();
   }
   showToast(successCount ? `Rechecked ${successCount} of ${targets.length} studios` : "Recheck failed — is the function deployed?", successCount===0);
 }
