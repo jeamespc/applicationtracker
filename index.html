@@ -432,6 +432,7 @@
       <select id="filterStatus"></select>
       <select id="filterChannel"></select>
       <select id="filterSpec"></select>
+      <select id="filterLocation"></select>
       <select id="sortBy">
         <option value="status">Sort: Status</option>
         <option value="name">Sort: Studio A–Z</option>
@@ -862,6 +863,7 @@ function renderStats(){
       document.getElementById("filterStatus").value = "";
       document.getElementById("filterChannel").value = "";
       document.getElementById("filterSpec").value = "";
+      document.getElementById("filterLocation").value = "";
       renderAll();
     });
   });
@@ -876,9 +878,11 @@ function matchesFilters(item){
   const fStatus = document.getElementById("filterStatus").value;
   const fChannel = document.getElementById("filterChannel").value;
   const fSpec = document.getElementById("filterSpec").value;
+  const fLoc = document.getElementById("filterLocation").value;
   if(fStatus && item.status !== fStatus) return false;
   if(fChannel && item.channel !== fChannel) return false;
   if(fSpec && !specList(item).includes(fSpec)) return false;
+  if(fLoc && !locationList(item).some(l=>l.toLowerCase()===fLoc)) return false;
   if(q){
     const hay = [item.studio,item.discipline,item.whyFits,item.location,item.contact,item.responseLog].join(" ").toLowerCase();
     if(!hay.includes(q)) return false;
@@ -888,6 +892,59 @@ function matchesFilters(item){
 
 function specList(item){
   return String(item.specialization||"").split(",").map(s=>s.trim()).filter(Boolean);
+}
+
+// A studio's location is free text ("Milan", "Milan + NY", "Genova (not Milan)",
+// "our Turin office"), so split it into its individual places - dropping bracketed
+// asides and filler words, and folding Italian/short spellings into one name - so a
+// studio with two offices turns up under each of them and "Milano" = "Milan".
+const CITY_ALIASES = {
+  milano:"Milan", torino:"Turin", roma:"Rome", firenze:"Florence", genova:"Genoa",
+  venezia:"Venice", napoli:"Naples", ny:"New York", nyc:"New York", "new york":"New York",
+  "münchen":"Munich"
+};
+function locationList(item){
+  const out = [];
+  String(item.location||"").replace(/\([^)]*\)/g,"")
+    .split(/\s*(?:\+|\/|,|&|;|\band\b)\s*/i).forEach(raw=>{
+      let t = raw.trim().replace(/^our\s+|\s+office$/gi,"").trim();
+      if(!t) return;
+      const alias = CITY_ALIASES[t.toLowerCase()];
+      if(alias) t = alias;
+      else if(t === t.toUpperCase() && t.length > 3) t = t.toLowerCase().replace(/(^|\s)\S/g, m=>m.toUpperCase());
+      if(!out.some(x=>x.toLowerCase()===t.toLowerCase())) out.push(t);
+    });
+  return out;
+}
+
+// Rebuilds the location dropdown from whatever locations the studios currently
+// have (most common first), keeping the current choice if it still exists.
+function refreshLocationFilter(){
+  const sel = document.getElementById("filterLocation");
+  const found = new Map();
+  data.forEach(item=>{
+    new Set(locationList(item).map(l=>l.toLowerCase())).forEach(key=>{
+      const label = locationList(item).find(l=>l.toLowerCase()===key);
+      const e = found.get(key) || {label, n:0};
+      e.n++;
+      found.set(key, e);
+    });
+  });
+  const entries = [...found.entries()].sort((a,b)=> b[1].n - a[1].n || a[1].label.localeCompare(b[1].label));
+  const sig = entries.map(([k,e])=>k+"|"+e.label+"|"+e.n).join(";");
+  if(sel.dataset.sig === sig) return;
+  const prev = sel.value;
+  sel.innerHTML = "";
+  const optAll = document.createElement("option");
+  optAll.value = ""; optAll.textContent = "All locations";
+  sel.appendChild(optAll);
+  entries.forEach(([key,e])=>{
+    const opt = document.createElement("option");
+    opt.value = key; opt.textContent = e.label + " (" + e.n + ")";
+    sel.appendChild(opt);
+  });
+  sel.dataset.sig = sig;
+  sel.value = found.has(prev) ? prev : "";
 }
 
 function hasActiveOpening(item){
@@ -999,6 +1056,7 @@ function escapeHtml(s){
 }
 
 function renderList(){
+  refreshLocationFilter();
   const listEl = document.getElementById("list");
   const starterPrompt = document.getElementById("starterPrompt");
   if(data.length === 0){
@@ -1272,7 +1330,7 @@ function wireToolbar(){
   document.getElementById("bulkApplyBtn").addEventListener("click", applyBulkStatus);
   document.getElementById("recheckOpeningsBtn").addEventListener("click", recheckAllOpenings);
 
-  ["search","filterStatus","filterChannel","filterSpec"].forEach(id=>{
+  ["search","filterStatus","filterChannel","filterSpec","filterLocation"].forEach(id=>{
     const clearAndRender = ()=>{ activeStat = null; renderStats(); renderList(); };
     document.getElementById(id).addEventListener("input", clearAndRender);
     document.getElementById(id).addEventListener("change", clearAndRender);
@@ -1323,6 +1381,7 @@ function wireToolbar(){
     document.getElementById("filterStatus").value = "";
     document.getElementById("filterChannel").value = "";
     document.getElementById("filterSpec").value = "";
+    document.getElementById("filterLocation").value = "";
     document.getElementById("sortBy").value = "status";
     activeStat = null;
     renderAll();
